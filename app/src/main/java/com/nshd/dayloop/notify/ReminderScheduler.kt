@@ -76,8 +76,10 @@ object ReminderScheduler {
 
     fun cancel(context: Context, itemId: String) {
         val alarm = context.getSystemService(AlarmManager::class.java) ?: return
-        alarm.cancel(pendingIntent(context, requestCodeFor(itemId), null, snooze = false))
-        alarm.cancel(pendingIntent(context, requestCodeFor(itemId) + SNOOZE_OFFSET, null, snooze = true))
+        pendingIntent(context, requestCodeFor(itemId), null, snooze = false)
+            ?.let { alarm.cancel(it) }
+        pendingIntent(context, requestCodeFor(itemId) + SNOOZE_OFFSET, null, snooze = true)
+            ?.let { alarm.cancel(it) }
     }
 
     private fun nextTriggerMillis(item: TrackItem, doneToday: Boolean): Long? {
