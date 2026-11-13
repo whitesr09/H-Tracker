@@ -1,0 +1,65 @@
+package com.nshd.dayloop.ui
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.nshd.dayloop.ui.screens.ProgressScreen
+import com.nshd.dayloop.ui.screens.SettingsScreen
+import com.nshd.dayloop.ui.screens.TodayScreen
+import com.nshd.dayloop.ui.theme.AcidGreen
+import com.nshd.dayloop.ui.theme.MutedText
+import com.nshd.dayloop.ui.theme.TileDark
+
+private enum class Tab(val label: String, val icon: ImageVector) {
+    Today("Today", Icons.Filled.Home),
+    Progress("Progress", Icons.Filled.BarChart),
+    Settings("Settings", Icons.Filled.Settings)
+}
+
+@Composable
+fun DayLoopApp() {
+    var tab by remember { mutableStateOf(Tab.Today) }
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar(containerColor = TileDark) {
+                Tab.entries.forEach { item ->
+                    NavigationBarItem(
+                        selected = tab == item,
+                        onClick = { tab = item },
+                        icon = { Icon(item.icon, contentDescription = item.label) },
+                        label = { Text(item.label) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = AcidGreen,
+                            selectedTextColor = AcidGreen,
+                            unselectedIconColor = MutedText,
+                            unselectedTextColor = MutedText,
+                            indicatorColor = TileDark
+                        )
+                    )
+                }
+            }
+        }
+    ) { innerPadding ->
+        when (tab) {
+            Tab.Today -> TodayScreen(Modifier.padding(innerPadding))
+            Tab.Progress -> ProgressScreen(Modifier.padding(innerPadding))
+            Tab.Settings -> SettingsScreen(Modifier.padding(innerPadding))
+        }
+    }
+}
