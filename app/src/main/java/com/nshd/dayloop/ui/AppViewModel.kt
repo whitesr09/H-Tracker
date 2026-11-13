@@ -197,6 +197,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { store.addItem(item) }
     }
 
+    fun updateItem(item: TrackItem) {
+        viewModelScope.launch { store.updateItem(item) }
+    }
+
     fun deleteItem(item: TrackItem) {
         viewModelScope.launch {
             ReminderScheduler.cancel(app, item.id)

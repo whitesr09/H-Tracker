@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.PlayCircle
@@ -75,6 +76,7 @@ import java.time.format.DateTimeFormatter
 fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
     val state by viewModel.state.collectAsState()
     var showSheet by remember { mutableStateOf(false) }
+    var editTarget by remember { mutableStateOf<TrackItem?>(null) }
     var deleteTarget by remember { mutableStateOf<TrackItem?>(null) }
     val todayLabel = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM"))
 
@@ -142,6 +144,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                             onCount = { delta -> viewModel.changeCount(item, delta) },
                             onSkip = { viewModel.markSkipped(item) },
                             onLater = { viewModel.markLater(item) },
+                            onEdit = { editTarget = item },
                             onLongPress = { deleteTarget = item },
                             modifier = Modifier.animateItem()
                         )
@@ -157,6 +160,17 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
         AddItemSheet(
             onDismiss = { showSheet = false },
             onAdd = { viewModel.addItem(it) }
+        )
+    }
+
+    editTarget?.let { target ->
+        AddItemSheet(
+            onDismiss = { editTarget = null },
+            onAdd = {
+                viewModel.updateItem(it)
+                editTarget = null
+            },
+            initial = target
         )
     }
 
@@ -335,6 +349,7 @@ private fun ItemRow(
     onCount: (Int) -> Unit,
     onSkip: () -> Unit,
     onLater: () -> Unit,
+    onEdit: () -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -393,6 +408,18 @@ private fun ItemRow(
                 text = subText(item, completion),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (done) AcidGreen else MutedText
+            )
+        }
+
+        IconButton(
+            onClick = onEdit,
+            modifier = Modifier.size(30.dp)
+        ) {
+            Icon(
+                Icons.Filled.Edit,
+                contentDescription = "Edit ${item.name}",
+                tint = MutedText,
+                modifier = Modifier.size(15.dp)
             )
         }
 

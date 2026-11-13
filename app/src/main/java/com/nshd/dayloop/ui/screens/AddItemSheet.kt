@@ -42,20 +42,24 @@ import com.nshd.dayloop.ui.theme.TileRaised
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddItemSheet(onDismiss: () -> Unit, onAdd: (TrackItem) -> Unit) {
-    var name by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf(ItemType.HABIT) }
-    var group by remember { mutableStateOf(DayGroup.MORNING) }
-    var kind by remember { mutableStateOf(HabitKind.YESNO) }
-    var target by remember { mutableStateOf("8") }
-    var unit by remember { mutableStateOf("") }
-    var dose by remember { mutableStateOf("") }
-    var pills by remember { mutableStateOf("") }
-    var perDose by remember { mutableStateOf("1") }
-    var remind by remember { mutableStateOf(true) }
-    var hasTime by remember { mutableStateOf(false) }
-    var hour by remember { mutableStateOf("7") }
-    var minute by remember { mutableStateOf("30") }
+fun AddItemSheet(
+    onDismiss: () -> Unit,
+    onAdd: (TrackItem) -> Unit,
+    initial: TrackItem? = null
+) {
+    var name by remember { mutableStateOf(initial?.name ?: "") }
+    var type by remember { mutableStateOf(initial?.type ?: ItemType.HABIT) }
+    var group by remember { mutableStateOf(initial?.group ?: DayGroup.MORNING) }
+    var kind by remember { mutableStateOf(initial?.kind ?: HabitKind.YESNO) }
+    var target by remember { mutableStateOf(initial?.targetCount?.toString() ?: "8") }
+    var unit by remember { mutableStateOf(initial?.unit ?: "") }
+    var dose by remember { mutableStateOf(initial?.doseLabel ?: "") }
+    var pills by remember { mutableStateOf(initial?.pillsLeft?.toString() ?: "") }
+    var perDose by remember { mutableStateOf(initial?.pillsPerDose?.toString() ?: "1") }
+    var remind by remember { mutableStateOf(initial?.remind ?: true) }
+    var hasTime by remember { mutableStateOf(initial?.timeMinutes != null) }
+    var hour by remember { mutableStateOf(initial?.timeMinutes?.let { (it / 60).toString() } ?: "7") }
+    var minute by remember { mutableStateOf(initial?.timeMinutes?.let { (it % 60).toString() } ?: "30") }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -68,7 +72,10 @@ fun AddItemSheet(onDismiss: () -> Unit, onAdd: (TrackItem) -> Unit) {
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(text = "Add to your loop", style = MaterialTheme.typography.titleLarge)
+            Text(
+                text = if (initial == null) "Add to your loop" else "Edit item",
+                style = MaterialTheme.typography.titleLarge
+            )
 
             OutlinedTextField(
                 value = name,
@@ -216,7 +223,7 @@ fun AddItemSheet(onDismiss: () -> Unit, onAdd: (TrackItem) -> Unit) {
                     } else null
                     onAdd(
                         TrackItem(
-                            id = AppViewModel.newId(),
+                            id = initial?.id ?: AppViewModel.newId(),
                             type = type,
                             name = name.trim(),
                             group = group,
@@ -227,7 +234,10 @@ fun AddItemSheet(onDismiss: () -> Unit, onAdd: (TrackItem) -> Unit) {
                             doseLabel = dose.trim(),
                             pillsLeft = if (type == ItemType.MEDICATION) pills.toIntOrNull()?.coerceIn(0, 9999) else null,
                             pillsPerDose = perDose.toIntOrNull()?.coerceIn(1, 99) ?: 1,
-                            remind = hasTime && remind
+                            remind = hasTime && remind,
+                            weekdays = initial?.weekdays ?: (1..7).toSet(),
+                            createdAt = initial?.createdAt ?: System.currentTimeMillis(),
+                            archived = initial?.archived ?: false
                         )
                     )
                     onDismiss()
@@ -237,7 +247,10 @@ fun AddItemSheet(onDismiss: () -> Unit, onAdd: (TrackItem) -> Unit) {
                     .fillMaxWidth()
                     .padding(bottom = 20.dp)
             ) {
-                Text(text = "Add item", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = if (initial == null) "Add item" else "Save changes",
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
         }
     }

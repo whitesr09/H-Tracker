@@ -53,6 +53,10 @@ object ReminderScheduler {
             .map { it.itemId }
             .toSet()
 
+        // Items edited to drop their time or reminder keep no stale alarm.
+        items.filter { !it.remind || it.timeMinutes == null || it.archived }
+            .forEach { cancel(context, it.id) }
+
         items.filter { it.remind && it.timeMinutes != null && !it.archived }
             .forEach { item ->
                 val trigger = nextTriggerMillis(item, todayDone.contains(item.id))
