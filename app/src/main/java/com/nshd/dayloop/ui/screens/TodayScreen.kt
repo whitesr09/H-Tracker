@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -214,12 +215,15 @@ private fun HeroRow(state: TodayUiState) {
         label = "ring"
     )
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(androidx.compose.foundation.layout.IntrinsicSize.Max),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
             modifier = Modifier
                 .weight(1.35f)
+                .fillMaxHeight()
                 .clip(RoundedCornerShape(24.dp))
                 .background(TileDark)
                 .border(1.dp, TileBorder, RoundedCornerShape(24.dp))
@@ -266,20 +270,24 @@ private fun HeroRow(state: TodayUiState) {
         }
 
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             MiniTile(
                 icon = Icons.Filled.Whatshot,
                 label = "STREAK",
-                value = "${state.streak} ${if (state.streak == 1) "day" else "days"}"
+                value = "${state.streak} ${if (state.streak == 1) "day" else "days"}",
+                modifier = Modifier.weight(1f)
             )
             MiniTile(
                 icon = Icons.Filled.Medication,
                 label = "NEXT DOSE",
                 value = state.nextDose?.let { dose ->
                     dose.timeMinutes?.let { "${dose.name} · ${formatTime(it)}" } ?: dose.name
-                } ?: "None"
+                } ?: "None",
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -312,15 +320,20 @@ private fun RefillTile(lowStock: List<TrackItem>) {
 }
 
 @Composable
-private fun MiniTile(icon: ImageVector, label: String, value: String) {
+private fun MiniTile(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(TileDark)
             .border(1.dp, TileBorder, RoundedCornerShape(20.dp))
             .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -466,10 +479,10 @@ private fun ItemRow(
         }
 
         if (item.type == ItemType.MEDICATION && !done) {
-            Column(horizontalAlignment = Alignment.End) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(
                     onClick = onLater,
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 0.dp)
                 ) {
                     Text(
                         if (completion?.status == Completion.LATER) "Snoozed" else "Later",
@@ -478,7 +491,7 @@ private fun ItemRow(
                 }
                 TextButton(
                     onClick = onSkip,
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 0.dp)
                 ) {
                     Text(if (skipped) "Skipped" else "Skip", color = MutedText)
                 }

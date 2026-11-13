@@ -38,7 +38,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.headlineLarge
         )
         Text(
-            text = "DayLoop v0.4.0",
+            text = "DayLoop v0.4.1",
             style = MaterialTheme.typography.bodyMedium,
             color = MutedText
         )
