@@ -1,5 +1,10 @@
 package com.nshd.dayloop.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
@@ -32,7 +37,7 @@ private enum class Tab(val label: String, val icon: ImageVector) {
 }
 
 @Composable
-fun DayLoopApp() {
+fun DayLoopApp(viewModel: AppViewModel) {
     var tab by remember { mutableStateOf(Tab.Today) }
 
     Scaffold(
@@ -56,10 +61,16 @@ fun DayLoopApp() {
             }
         }
     ) { innerPadding ->
-        when (tab) {
-            Tab.Today -> TodayScreen(Modifier.padding(innerPadding))
-            Tab.Progress -> ProgressScreen(Modifier.padding(innerPadding))
-            Tab.Settings -> SettingsScreen(Modifier.padding(innerPadding))
+        AnimatedContent(
+            targetState = tab,
+            transitionSpec = { fadeIn(tween(260)) togetherWith fadeOut(tween(180)) },
+            label = "tab"
+        ) { current ->
+            when (current) {
+                Tab.Today -> TodayScreen(viewModel, Modifier.padding(innerPadding))
+                Tab.Progress -> ProgressScreen(viewModel, Modifier.padding(innerPadding))
+                Tab.Settings -> SettingsScreen(Modifier.padding(innerPadding))
+            }
         }
     }
 }

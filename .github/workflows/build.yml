@@ -35,13 +35,51 @@ jobs:
         with:
           gradle-version: "8.13"
 
+      - name: Prepare release signing
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+          KS_B64: ${{ secrets.CI_KEYSTORE_BASE64 }}
+          KS_ALIAS: ${{ secrets.CI_KEYSTORE_ALIAS }}
+          KS_STORE_PW: ${{ secrets.CI_KEYSTORE_PASSWORD }}
+          KS_KEY_PW: ${{ secrets.CI_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$GITHUB_WORKSPACE/keystore.jks"
+            cat > "$GITHUB_WORKSPACE/keystore.properties" <<PROPS
+          storeFile=$GITHUB_WORKSPACE/keystore.jks
+          storePassword=$KS_STORE_PW
+          keyAlias=$KS_ALIAS
+          keyPassword=$KS_KEY_PW
+          PROPS
+            echo "Release signing ready"
+          else
+            echo "No signing secrets — debug build"
+          fi
+
+      - name: Build release APK
+        if: hashFiles('keystore.properties') != ''
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: gradle assembleRelease --no-daemon --stacktrace
+
       - name: Build debug APK
+        if: hashFiles('keystore.properties') == ''
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: gradle assembleDebug --no-daemon --stacktrace
 
-      - name: Upload APK
+      - name: Upload release APK
+        if: hashFiles('keystore.properties') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: DayLoop-release
+          path: app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload debug APK
+        if: hashFiles('keystore.properties') == ''
         uses: actions/upload-artifact@v4
         with:
           name: DayLoop-debug

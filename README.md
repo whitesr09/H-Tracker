@@ -14,7 +14,7 @@ DayLoop is a personal daily habit tracker for Android — habits, timed routines
 
 ## Status
 
-v0.1.0 — Level 1 scaffold: app shell, bento Today screen, Higgsfield theme. Features land level by level.
+v0.2.0 — working tracker: add habits, medications, routines and plans, one-tap check-ins, streaks, permanent release signing.
 
 ## Developer
 
