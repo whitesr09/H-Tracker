@@ -112,6 +112,12 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
             HeroRow(state)
         }
 
+        if (state.lowStock.isNotEmpty()) {
+            item {
+                RefillTile(state.lowStock)
+            }
+        }
+
         if (state.dueItems.isEmpty()) {
             item {
                 EmptyTile()
@@ -135,6 +141,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                             onToggle = { viewModel.toggle(item) },
                             onCount = { delta -> viewModel.changeCount(item, delta) },
                             onSkip = { viewModel.markSkipped(item) },
+                            onLater = { viewModel.markLater(item) },
                             onLongPress = { deleteTarget = item },
                             modifier = Modifier.animateItem()
                         )
@@ -252,6 +259,32 @@ private fun HeroRow(state: TodayUiState) {
 }
 
 @Composable
+private fun RefillTile(lowStock: List<TrackItem>) {
+    val first = lowStock.first()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(TileDark)
+            .border(1.dp, AcidGreen, RoundedCornerShape(20.dp))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
+        Text(text = "REFILL SOON", style = MaterialTheme.typography.labelLarge, color = AcidGreen)
+        Text(
+            text = "${first.name} · ${first.pillsLeft} left" +
+                (if (lowStock.size > 1) " (+${lowStock.size - 1} more)" else ""),
+            style = MaterialTheme.typography.titleMedium
+        )
+        Text(
+            text = "About ${first.daysOfPillsLeft()} days at the current dose.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MutedText
+        )
+    }
+}
+
+@Composable
 private fun MiniTile(icon: ImageVector, label: String, value: String) {
     Column(
         modifier = Modifier
@@ -301,6 +334,7 @@ private fun ItemRow(
     onToggle: () -> Unit,
     onCount: (Int) -> Unit,
     onSkip: () -> Unit,
+    onLater: () -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -377,8 +411,22 @@ private fun ItemRow(
         }
 
         if (item.type == ItemType.MEDICATION && !done) {
-            TextButton(onClick = onSkip) {
-                Text(if (skipped) "Skipped" else "Skip", color = MutedText)
+            Column(horizontalAlignment = Alignment.End) {
+                TextButton(
+                    onClick = onLater,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        if (completion?.status == Completion.LATER) "Snoozed" else "Later",
+                        color = AcidGreen
+                    )
+                }
+                TextButton(
+                    onClick = onSkip,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    Text(if (skipped) "Skipped" else "Skip", color = MutedText)
+                }
             }
         }
     }
@@ -416,7 +464,9 @@ private fun subText(item: TrackItem, completion: Completion?): String {
             when (completion?.status) {
                 Completion.TAKEN -> parts.add("Taken ${formatMillis(completion.atMillis)}")
                 Completion.SKIPPED -> parts.add("Skipped")
+                Completion.LATER -> parts.add("Later · reminder in 30 min")
             }
+            item.pillsLeft?.let { parts.add("$it left") }
         }
         ItemType.HABIT -> {
             if (item.kind == HabitKind.COUNT) {

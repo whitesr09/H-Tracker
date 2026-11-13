@@ -52,10 +52,36 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
             StatTile(Modifier.weight(1f), "ITEMS TRACKED", "${state.totalItems}")
             StatTile(Modifier.weight(1f), "TODAY", "${state.doneCount}/${state.dueItems.size}")
         }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            StatTile(
+                Modifier.weight(1f),
+                "MED ADHERENCE · 30D",
+                state.medAdherence30?.let { "${(it * 100).toInt()}%" } ?: "—"
+            )
+            StatTile(Modifier.weight(1f), "REFILL SOON", "${state.lowStock.size}")
+        }
+
+        if (state.lowStock.isNotEmpty()) {
+            Text(
+                text = "LOW STOCK",
+                style = MaterialTheme.typography.labelLarge,
+                color = MutedText,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            state.lowStock.forEach { item ->
+                Text(
+                    text = "${item.name} · ${item.pillsLeft} left · about ${item.daysOfPillsLeft()} days",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        }
 
         Spacer(Modifier.height(4.dp))
         Text(
-            text = "Strength scores and the full heatmap arrive in the next level.",
+            text = "Strength scores and the full heatmap arrive in Level 4.",
             style = MaterialTheme.typography.bodyMedium,
             color = MutedText
         )

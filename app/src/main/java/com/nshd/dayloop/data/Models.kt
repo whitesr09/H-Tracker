@@ -16,11 +16,19 @@ data class TrackItem(
     val targetCount: Int = 1,
     val unit: String = "",
     val doseLabel: String = "",
+    val pillsLeft: Int? = null,
+    val pillsPerDose: Int = 1,
+    val remind: Boolean = true,
     val weekdays: Set<Int> = (1..7).toSet(),
     val createdAt: Long = System.currentTimeMillis(),
     val archived: Boolean = false
 ) {
     fun dueOn(dayOfWeek: Int): Boolean = !archived && weekdays.contains(dayOfWeek)
+
+    /** Rough days of medication left at one dose per day; null when untracked. */
+    fun daysOfPillsLeft(): Int? = pillsLeft?.let { left ->
+        (left / pillsPerDose.coerceAtLeast(1))
+    }
 }
 
 data class Completion(
@@ -34,5 +42,6 @@ data class Completion(
         const val DONE = "DONE"
         const val TAKEN = "TAKEN"
         const val SKIPPED = "SKIPPED"
+        const val LATER = "LATER"
     }
 }

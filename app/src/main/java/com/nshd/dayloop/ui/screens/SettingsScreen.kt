@@ -38,7 +38,24 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.headlineLarge
         )
         Text(
-            text = "DayLoop v0.2.0",
+            text = "DayLoop v0.3.0",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MutedText
+        )
+
+        Text(
+            text = "REMINDERS",
+            style = MaterialTheme.typography.labelLarge,
+            color = MutedText,
+            modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
+        )
+        Text(
+            text = "Timed items with \"Remind me\" on get a phone notification at their time. Medications can snooze a dose by 30 minutes with Later.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MutedText
+        )
+        Text(
+            text = "After a phone restart, open DayLoop once so every reminder re-arms (it also re-arms itself on boot). If notifications are off, allow them for DayLoop in Android Settings → Apps → DayLoop → Notifications.",
             style = MaterialTheme.typography.bodyMedium,
             color = MutedText
         )

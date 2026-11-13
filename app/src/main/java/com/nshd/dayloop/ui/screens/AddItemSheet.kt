@@ -50,6 +50,9 @@ fun AddItemSheet(onDismiss: () -> Unit, onAdd: (TrackItem) -> Unit) {
     var target by remember { mutableStateOf("8") }
     var unit by remember { mutableStateOf("") }
     var dose by remember { mutableStateOf("") }
+    var pills by remember { mutableStateOf("") }
+    var perDose by remember { mutableStateOf("1") }
+    var remind by remember { mutableStateOf(true) }
     var hasTime by remember { mutableStateOf(false) }
     var hour by remember { mutableStateOf("7") }
     var minute by remember { mutableStateOf("30") }
@@ -154,6 +157,25 @@ fun AddItemSheet(onDismiss: () -> Unit, onAdd: (TrackItem) -> Unit) {
                 }
             }
 
+            if (hasTime) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Switch(
+                        checked = remind,
+                        onCheckedChange = { remind = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.Black,
+                            checkedTrackColor = AcidGreen,
+                            uncheckedThumbColor = OffWhite,
+                            uncheckedTrackColor = TileRaised
+                        )
+                    )
+                    Text(text = "Remind me at that time", style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+
             if (type == ItemType.MEDICATION) {
                 OutlinedTextField(
                     value = dose,
@@ -163,6 +185,25 @@ fun AddItemSheet(onDismiss: () -> Unit, onAdd: (TrackItem) -> Unit) {
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = pills,
+                        onValueChange = { pills = it.filter { c -> c.isDigit() }.take(4) },
+                        label = { Text("Pills left") },
+                        placeholder = { Text("optional") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.width(130.dp)
+                    )
+                    OutlinedTextField(
+                        value = perDose,
+                        onValueChange = { perDose = it.filter { c -> c.isDigit() }.take(2) },
+                        label = { Text("Per dose") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.width(110.dp)
+                    )
+                }
             }
 
             Button(
@@ -183,7 +224,10 @@ fun AddItemSheet(onDismiss: () -> Unit, onAdd: (TrackItem) -> Unit) {
                             kind = kind,
                             targetCount = target.toIntOrNull()?.coerceIn(1, 999) ?: 1,
                             unit = unit.trim(),
-                            doseLabel = dose.trim()
+                            doseLabel = dose.trim(),
+                            pillsLeft = if (type == ItemType.MEDICATION) pills.toIntOrNull()?.coerceIn(0, 9999) else null,
+                            pillsPerDose = perDose.toIntOrNull()?.coerceIn(1, 99) ?: 1,
+                            remind = hasTime && remind
                         )
                     )
                     onDismiss()

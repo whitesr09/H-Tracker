@@ -14,7 +14,7 @@ DayLoop is a personal daily habit tracker for Android — habits, timed routines
 
 ## Status
 
-v0.2.0 — working tracker: add habits, medications, routines and plans, one-tap check-ins, streaks, permanent release signing.
+v0.3.0 — Level 3: real phone notifications for timed items (alarms re-arm on change, app open and boot), medication depth — Taken / Skipped / Later with a 30-minute snooze reminder, pill counts that tick down per dose, refill-soon warnings and 30-day medication adherence. Permanent release signing.
 
 ## Developer
 

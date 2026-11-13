@@ -31,6 +31,14 @@ class DayLoopStore(private val context: Context) {
         }
     }
 
+    suspend fun updateItem(item: TrackItem) {
+        context.dataStore.edit { prefs ->
+            val list = parseItems(prefs[itemsKey] ?: "[]")
+                .map { if (it.id == item.id) item else it }
+            prefs[itemsKey] = itemsToJson(list)
+        }
+    }
+
     suspend fun deleteItem(id: String) {
         context.dataStore.edit { prefs ->
             val list = parseItems(prefs[itemsKey] ?: "[]").filterNot { it.id == id }
@@ -72,6 +80,9 @@ class DayLoopStore(private val context: Context) {
                     targetCount = o.optInt("target", 1),
                     unit = o.optString("unit", ""),
                     doseLabel = o.optString("dose", ""),
+                    pillsLeft = if (!o.has("pills") || o.isNull("pills")) null else o.getInt("pills"),
+                    pillsPerDose = o.optInt("perDose", 1).coerceAtLeast(1),
+                    remind = o.optBoolean("remind", true),
                     weekdays = o.optString("days", "1,2,3,4,5,6,7")
                         .split(",").filter { it.isNotBlank() }.map { it.toInt() }.toSet(),
                     createdAt = o.optLong("created", 0L),
@@ -95,6 +106,9 @@ class DayLoopStore(private val context: Context) {
             o.put("target", item.targetCount)
             o.put("unit", item.unit)
             o.put("dose", item.doseLabel)
+            if (item.pillsLeft == null) o.put("pills", JSONObject.NULL) else o.put("pills", item.pillsLeft)
+            o.put("perDose", item.pillsPerDose)
+            o.put("remind", item.remind)
             o.put("days", item.weekdays.sorted().joinToString(","))
             o.put("created", item.createdAt)
             o.put("archived", item.archived)
