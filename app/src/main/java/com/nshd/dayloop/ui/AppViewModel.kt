@@ -9,6 +9,7 @@ import com.nshd.dayloop.data.HabitKind
 import com.nshd.dayloop.data.ItemType
 import com.nshd.dayloop.data.TrackItem
 import com.nshd.dayloop.notify.ReminderScheduler
+import com.nshd.dayloop.widget.DayLoopWidget
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -16,6 +17,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.UUID
+
+data class HabitStrength(
+    val itemId: String,
+    val name: String,
+    val percent: Float
+)
 
 data class TodayUiState(
     val dueItems: List<TrackItem> = emptyList(),
@@ -27,7 +34,11 @@ data class TodayUiState(
     val totalItems: Int = 0,
     val totalCheckins: Int = 0,
     val medAdherence30: Float? = null,
-    val lowStock: List<TrackItem> = emptyList()
+    val lowStock: List<TrackItem> = emptyList(),
+    /** Oldest → today, 105 days; -1f marks a day with nothing due. */
+    val heatmap: List<Float> = emptyList(),
+    val strengths: List<HabitStrength> = emptyList(),
+    val weekCheckins: Int = 0
 )
 
 class AppViewModel(application: Application) : AndroidViewModel(application) {
@@ -46,6 +57,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             combine(store.items, store.completions) { items, comps -> items to comps }
                 .collect { (items, comps) ->
                     ReminderScheduler.scheduleAll(app, items, comps)
+                    DayLoopWidget.requestUpdate(app)
                 }
         }
     }
@@ -113,6 +125,44 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             item.type == ItemType.MEDICATION && days != null && days <= 7
         }
 
+        // Heatmap: per-day completion fraction for the last 105 days.
+        val compsByDay = comps.groupBy { it.epochDay }
+        val heatmap = (104 downTo 0).map { back ->
+            val day = today.minusDays(back.toLong())
+            val dayDue = items.filter { it.dueOn(day.dayOfWeek.value) }
+            if (dayDue.isEmpty()) {
+                -1f
+            } else {
+                val dayMap = compsByDay[day.toEpochDay()].orEmpty().associateBy { it.itemId }
+                dayDue.map { fractionOf(it, dayMap[it.id]) }.average().toFloat()
+            }
+        }
+
+        // Forgiving strength per habit: average daily fraction over the
+        // last 28 days (misses lower it gradually, never wipe it).
+        val strengths = items.filter { it.type == ItemType.HABIT && !it.archived }.map { habit ->
+            var sum = 0f
+            var days = 0
+            for (back in 0..27) {
+                val day = today.minusDays(back.toLong())
+                if (!habit.dueOn(day.dayOfWeek.value)) continue
+                val createdDay = java.time.Instant.ofEpochMilli(habit.createdAt)
+                    .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+                if (day.isBefore(createdDay)) continue
+                val comp = compsByDay[day.toEpochDay()].orEmpty()
+                    .firstOrNull { it.itemId == habit.id }
+                sum += fractionOf(habit, comp)
+                days++
+            }
+            HabitStrength(habit.id, habit.name, if (days == 0) 0f else sum / days)
+        }.sortedByDescending { it.percent }
+
+        val weekStart = todayEpoch - 6
+        val weekCheckins = comps.count {
+            it.epochDay in weekStart..todayEpoch &&
+                (it.status == Completion.DONE || it.status == Completion.TAKEN)
+        }
+
         return TodayUiState(
             dueItems = due,
             todayCompletions = todayMap,
@@ -123,8 +173,20 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             totalItems = items.count { !it.archived },
             totalCheckins = comps.count { it.status == Completion.DONE || it.status == Completion.TAKEN },
             medAdherence30 = medAdherence,
-            lowStock = lowStock
+            lowStock = lowStock,
+            heatmap = heatmap,
+            strengths = strengths,
+            weekCheckins = weekCheckins
         )
+    }
+
+    /** Mark an item done for today without toggling (Run mode finish). */
+    fun markDone(item: TrackItem) {
+        val today = LocalDate.now().toEpochDay()
+        viewModelScope.launch {
+            val status = if (item.type == ItemType.MEDICATION) Completion.TAKEN else Completion.DONE
+            store.setCompletion(Completion(item.id, today, status, 1))
+        }
     }
 
     fun toggle(item: TrackItem) {

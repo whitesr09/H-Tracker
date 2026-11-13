@@ -76,6 +76,7 @@ import java.time.format.DateTimeFormatter
 fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
     val state by viewModel.state.collectAsState()
     var showSheet by remember { mutableStateOf(false) }
+    var runTarget by remember { mutableStateOf<TrackItem?>(null) }
     var editTarget by remember { mutableStateOf<TrackItem?>(null) }
     var deleteTarget by remember { mutableStateOf<TrackItem?>(null) }
     val todayLabel = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM"))
@@ -144,6 +145,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                             onCount = { delta -> viewModel.changeCount(item, delta) },
                             onSkip = { viewModel.markSkipped(item) },
                             onLater = { viewModel.markLater(item) },
+                            onRun = { runTarget = item },
                             onEdit = { editTarget = item },
                             onLongPress = { deleteTarget = item },
                             modifier = Modifier.animateItem()
@@ -171,6 +173,17 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 editTarget = null
             },
             initial = target
+        )
+    }
+
+    runTarget?.let { target ->
+        RunModeScreen(
+            item = target,
+            onFinish = {
+                viewModel.markDone(target)
+                runTarget = null
+            },
+            onExit = { runTarget = null }
         )
     }
 
@@ -349,6 +362,7 @@ private fun ItemRow(
     onCount: (Int) -> Unit,
     onSkip: () -> Unit,
     onLater: () -> Unit,
+    onRun: () -> Unit,
     onEdit: () -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier
@@ -409,6 +423,20 @@ private fun ItemRow(
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (done) AcidGreen else MutedText
             )
+        }
+
+        if (item.type == ItemType.ROUTINE && !done) {
+            IconButton(
+                onClick = onRun,
+                modifier = Modifier.size(34.dp)
+            ) {
+                Icon(
+                    Icons.Filled.PlayCircle,
+                    contentDescription = "Run ${item.name}",
+                    tint = AcidGreen,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
 
         IconButton(
@@ -503,7 +531,14 @@ private fun subText(item: TrackItem, completion: Completion?): String {
                 parts.add("Done ${formatMillis(completion.atMillis)}")
             }
         }
-        ItemType.ROUTINE -> if (completion?.status == Completion.DONE) parts.add("Done") else parts.add("Tap to complete")
+        ItemType.ROUTINE -> {
+            if (completion?.status == Completion.DONE) parts.add("Done")
+            if (item.routineSteps.isNotEmpty()) {
+                parts.add("${item.routineSteps.size} steps · ${item.routineTotalMinutes()} min")
+            } else if (completion?.status != Completion.DONE) {
+                parts.add("Tap ▶ to run")
+            }
+        }
         ItemType.PLAN -> if (completion?.status == Completion.DONE) parts.add("Done") else parts.add("Tap when done")
     }
     return parts.joinToString(" · ").ifBlank { "Anytime" }

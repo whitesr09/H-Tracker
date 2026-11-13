@@ -60,6 +60,13 @@ fun AddItemSheet(
     var hasTime by remember { mutableStateOf(initial?.timeMinutes != null) }
     var hour by remember { mutableStateOf(initial?.timeMinutes?.let { (it / 60).toString() } ?: "7") }
     var minute by remember { mutableStateOf(initial?.timeMinutes?.let { (it % 60).toString() } ?: "30") }
+    val steps = remember {
+        androidx.compose.runtime.mutableStateListOf(
+            *(initial?.routineSteps ?: emptyList()).toTypedArray()
+        )
+    }
+    var stepName by remember { mutableStateOf("") }
+    var stepMins by remember { mutableStateOf("5") }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -164,6 +171,60 @@ fun AddItemSheet(
                 }
             }
 
+            if (type == ItemType.ROUTINE) {
+                Text(
+                    text = "STEPS (FOR RUN MODE)",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = com.nshd.dayloop.ui.theme.MutedText
+                )
+                steps.forEachIndexed { index, step ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "${index + 1}. ${step.name} · ${step.durationMinutes} min",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f)
+                        )
+                        androidx.compose.material3.TextButton(onClick = { steps.removeAt(index) }) {
+                            Text("Remove", color = com.nshd.dayloop.ui.theme.MutedText)
+                        }
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = stepName,
+                        onValueChange = { stepName = it },
+                        label = { Text("Step") },
+                        placeholder = { Text("e.g. Brush, Shower, Read") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = stepMins,
+                        onValueChange = { stepMins = it.filter { c -> c.isDigit() }.take(3) },
+                        label = { Text("Min") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.width(80.dp)
+                    )
+                }
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        if (stepName.isNotBlank()) {
+                            steps.add(
+                                com.nshd.dayloop.data.RoutineStep(
+                                    stepName.trim(),
+                                    stepMins.toIntOrNull()?.coerceIn(1, 999) ?: 1
+                                )
+                            )
+                            stepName = ""
+                        }
+                    }
+                ) { Text("+ Add step", color = AcidGreen) }
+            }
+
             if (hasTime) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -235,6 +296,7 @@ fun AddItemSheet(
                             pillsLeft = if (type == ItemType.MEDICATION) pills.toIntOrNull()?.coerceIn(0, 9999) else null,
                             pillsPerDose = perDose.toIntOrNull()?.coerceIn(1, 99) ?: 1,
                             remind = hasTime && remind,
+                            routineSteps = if (type == ItemType.ROUTINE) steps.toList() else emptyList(),
                             weekdays = initial?.weekdays ?: (1..7).toSet(),
                             createdAt = initial?.createdAt ?: System.currentTimeMillis(),
                             archived = initial?.archived ?: false

@@ -83,6 +83,7 @@ class DayLoopStore(private val context: Context) {
                     pillsLeft = if (!o.has("pills") || o.isNull("pills")) null else o.getInt("pills"),
                     pillsPerDose = o.optInt("perDose", 1).coerceAtLeast(1),
                     remind = o.optBoolean("remind", true),
+                    routineSteps = parseSteps(o.optJSONArray("steps")),
                     weekdays = o.optString("days", "1,2,3,4,5,6,7")
                         .split(",").filter { it.isNotBlank() }.map { it.toInt() }.toSet(),
                     createdAt = o.optLong("created", 0L),
@@ -109,12 +110,35 @@ class DayLoopStore(private val context: Context) {
             if (item.pillsLeft == null) o.put("pills", JSONObject.NULL) else o.put("pills", item.pillsLeft)
             o.put("perDose", item.pillsPerDose)
             o.put("remind", item.remind)
+            val stepsArr = JSONArray()
+            item.routineSteps.forEach { step ->
+                val so = JSONObject()
+                so.put("n", step.name)
+                so.put("m", step.durationMinutes)
+                stepsArr.put(so)
+            }
+            o.put("steps", stepsArr)
             o.put("days", item.weekdays.sorted().joinToString(","))
             o.put("created", item.createdAt)
             o.put("archived", item.archived)
             arr.put(o)
         }
         return arr.toString()
+    }
+
+    private fun parseSteps(arr: JSONArray?): List<RoutineStep> {
+        if (arr == null) return emptyList()
+        val out = mutableListOf<RoutineStep>()
+        for (i in 0 until arr.length()) {
+            val o = arr.getJSONObject(i)
+            out.add(
+                RoutineStep(
+                    name = o.optString("n", ""),
+                    durationMinutes = o.optInt("m", 1).coerceAtLeast(1)
+                )
+            )
+        }
+        return out.filter { it.name.isNotBlank() }
     }
 
     private fun parseCompletions(json: String): List<Completion> {

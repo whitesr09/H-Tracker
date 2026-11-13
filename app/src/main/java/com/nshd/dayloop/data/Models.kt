@@ -6,6 +6,11 @@ enum class DayGroup { MORNING, AFTERNOON, EVENING, ANYTIME }
 
 enum class HabitKind { YESNO, COUNT }
 
+data class RoutineStep(
+    val name: String,
+    val durationMinutes: Int
+)
+
 data class TrackItem(
     val id: String,
     val type: ItemType,
@@ -19,6 +24,7 @@ data class TrackItem(
     val pillsLeft: Int? = null,
     val pillsPerDose: Int = 1,
     val remind: Boolean = true,
+    val routineSteps: List<RoutineStep> = emptyList(),
     val weekdays: Set<Int> = (1..7).toSet(),
     val createdAt: Long = System.currentTimeMillis(),
     val archived: Boolean = false
@@ -29,6 +35,8 @@ data class TrackItem(
     fun daysOfPillsLeft(): Int? = pillsLeft?.let { left ->
         (left / pillsPerDose.coerceAtLeast(1))
     }
+
+    fun routineTotalMinutes(): Int = routineSteps.sumOf { it.durationMinutes }
 }
 
 data class Completion(
