@@ -30,9 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.nshd.dayloop.data.DayLoopStore
 import com.nshd.dayloop.ui.theme.AcidGreen
 import com.nshd.dayloop.ui.theme.DayLoopTheme
-import com.nshd.dayloop.ui.theme.MutedText
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -61,8 +63,9 @@ class AlarmActivity : ComponentActivity() {
         val name = intent.getStringExtra(AlarmRingService.EXTRA_NAME) ?: "Task"
         val detail = intent.getStringExtra(AlarmRingService.EXTRA_DETAIL).orEmpty()
 
+        val darkTheme = runBlocking { DayLoopStore(applicationContext).themeDark.first() }
         setContent {
-            DayLoopTheme {
+            DayLoopTheme(darkTheme = darkTheme) {
                 AlarmScreen(
                     name = name,
                     detail = detail,
@@ -124,7 +127,7 @@ private fun AlarmScreen(
                 Text(
                     text = detail,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MutedText,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
             }
@@ -132,7 +135,7 @@ private fun AlarmScreen(
             Text(
                 text = now,
                 style = MaterialTheme.typography.titleMedium,
-                color = MutedText
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(Modifier.weight(1f))
@@ -164,7 +167,7 @@ private fun AlarmScreen(
                     Text(text = "Snooze 10 min")
                 }
                 TextButton(onClick = onDismiss) {
-                    Text(text = "Dismiss", color = MutedText)
+                    Text(text = "Dismiss", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

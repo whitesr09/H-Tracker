@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import org.json.JSONArray
 import org.json.JSONObject
@@ -35,6 +36,46 @@ class DayLoopStore(private val context: Context) {
             store[alarmSoundKey] = prefs.sound
             store[alarmVibrateKey] = prefs.vibrate
             store[alarmDefaultModeKey] = prefs.defaultMode.name
+        }
+    }
+
+    private val themeDarkKey = booleanPreferencesKey("theme_dark")
+
+    val themeDark: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[themeDarkKey] ?: true
+    }
+
+    suspend fun saveThemeDark(dark: Boolean) {
+        context.dataStore.edit { it[themeDarkKey] = dark }
+    }
+
+    /** Whole-data backup: items + completions as one JSON document. */
+    suspend fun exportJson(): String {
+        val prefs = context.dataStore.data.first()
+        val root = JSONObject()
+        root.put("app", "DayLoop")
+        root.put("version", 1)
+        root.put("items", JSONArray(prefs[itemsKey] ?: "[]"))
+        root.put("completions", JSONArray(prefs[completionsKey] ?: "[]"))
+        return root.toString(2)
+    }
+
+    /** Restores a backup made by [exportJson]; false when the file is invalid. */
+    suspend fun importJson(json: String): Boolean {
+        return try {
+            val root = JSONObject(json)
+            val items = root.getJSONArray("items")
+            val comps = root.getJSONArray("completions")
+            // Validate both payloads before touching stored data.
+            parseItems(items.toString())
+            parseCompletions(comps.toString())
+            context.dataStore.edit { prefs ->
+                prefs[itemsKey] = items.toString()
+                prefs[completionsKey] = comps.toString()
+            }
+            true
+        } catch (e: Exception) {
+            false
         }
     }
 
@@ -106,6 +147,7 @@ class DayLoopStore(private val context: Context) {
                     pillsPerDose = o.optInt("perDose", 1).coerceAtLeast(1),
                     remind = o.optBoolean("remind", true),
                     alarmStyle = o.optBoolean("alarm", false),
+                    weeklyTarget = if (!o.has("wt") || o.isNull("wt")) null else o.getInt("wt"),
                     routineSteps = parseSteps(o.optJSONArray("steps")),
                     weekdays = o.optString("days", "1,2,3,4,5,6,7")
                         .split(",").filter { it.isNotBlank() }.map { it.toInt() }.toSet(),
@@ -134,6 +176,7 @@ class DayLoopStore(private val context: Context) {
             o.put("perDose", item.pillsPerDose)
             o.put("remind", item.remind)
             o.put("alarm", item.alarmStyle)
+            if (item.weeklyTarget == null) o.put("wt", JSONObject.NULL) else o.put("wt", item.weeklyTarget)
             val stepsArr = JSONArray()
             item.routineSteps.forEach { step ->
                 val so = JSONObject()

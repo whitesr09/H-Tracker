@@ -25,10 +25,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.nshd.dayloop.ui.AppViewModel
 import com.nshd.dayloop.ui.theme.AcidGreen
-import com.nshd.dayloop.ui.theme.MutedText
-import com.nshd.dayloop.ui.theme.TileBorder
-import com.nshd.dayloop.ui.theme.TileDark
-import com.nshd.dayloop.ui.theme.TileRaised
 
 @Composable
 fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
@@ -78,12 +74,52 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
             }
         }
 
+        val weeklyItems = state.allItems.filter { it.weeklyTarget != null && !it.archived }
+        if (weeklyItems.isNotEmpty()) {
+            item {
+                Text(
+                    text = "WEEKLY TARGETS",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+            weeklyItems.forEach { targetItem ->
+                val target = targetItem.weeklyTarget ?: 1
+                val done = state.weeklyProgress[targetItem.id] ?: 0
+                item(key = "wt-${targetItem.id}") {
+                    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = targetItem.name, style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                text = if (done >= target) "Goal met ✓ $done/$target" else "$done/$target this week",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = AcidGreen
+                            )
+                        }
+                        LinearProgressIndicator(
+                            progress = { (done.toFloat() / target).coerceIn(0f, 1f) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(7.dp)
+                                .clip(RoundedCornerShape(7.dp)),
+                            color = AcidGreen,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
         if (state.lowStock.isNotEmpty()) {
             item {
                 Text(
                     text = "LOW STOCK",
                     style = MaterialTheme.typography.labelLarge,
-                    color = MutedText,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -101,7 +137,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
             Text(
                 text = "LAST 15 WEEKS",
                 style = MaterialTheme.typography.labelLarge,
-                color = MutedText,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
@@ -114,7 +150,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 Text(
                     text = "HABIT STRENGTH · 28 DAYS",
                     style = MaterialTheme.typography.labelLarge,
-                    color = MutedText,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
@@ -139,7 +175,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                                 .height(7.dp)
                                 .clip(RoundedCornerShape(7.dp)),
                             color = AcidGreen,
-                            trackColor = TileRaised
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                     }
                 }
@@ -148,7 +184,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 Text(
                     text = "Strength forgives: a missed day lowers it a little, never to zero.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MutedText
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -161,7 +197,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
 @Composable
 private fun Heatmap(heatmap: List<Float>) {
     if (heatmap.size < 105) {
-        Text(text = "Not enough history yet.", style = MaterialTheme.typography.bodyMedium, color = MutedText)
+        Text(text = "Not enough history yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         return
     }
     // heatmap list is chronological; the last day (today) sits in the
@@ -171,8 +207,8 @@ private fun Heatmap(heatmap: List<Float>) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(TileDark)
-            .border(1.dp, TileBorder, RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
             .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(3.dp)
     ) {
@@ -184,8 +220,8 @@ private fun Heatmap(heatmap: List<Float>) {
                 for (day in 0 until 7) {
                     val value = heatmap[week * 7 + day]
                     val cellColor = when {
-                        value < 0f -> TileDark
-                        value <= 0f -> TileRaised
+                        value < 0f -> MaterialTheme.colorScheme.surface
+                        value <= 0f -> MaterialTheme.colorScheme.surfaceVariant
                         else -> AcidGreen.copy(alpha = 0.25f + 0.75f * value)
                     }
                     Box(
@@ -205,12 +241,12 @@ private fun StatTile(modifier: Modifier = Modifier, label: String, value: String
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
-            .background(TileDark)
-            .border(1.dp, TileBorder, RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge, color = MutedText)
+        Text(text = label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(text = value, style = MaterialTheme.typography.titleLarge)
     }
 }

@@ -33,10 +33,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.nshd.dayloop.data.TrackItem
 import com.nshd.dayloop.ui.theme.AcidGreen
-import com.nshd.dayloop.ui.theme.InkBlack
-import com.nshd.dayloop.ui.theme.MutedText
-import com.nshd.dayloop.ui.theme.TileBorder
-import com.nshd.dayloop.ui.theme.TileDark
 import kotlinx.coroutines.delay
 
 /**
@@ -83,7 +79,7 @@ fun RunModeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(InkBlack)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = 20.dp, vertical = 28.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -96,7 +92,7 @@ fun RunModeScreen(
                     Text(text = "RUN MODE", style = MaterialTheme.typography.labelLarge, color = AcidGreen)
                     Text(text = item.name, style = MaterialTheme.typography.headlineMedium)
                 }
-                TextButton(onClick = onExit) { Text("Exit", color = MutedText) }
+                TextButton(onClick = onExit) { Text("Exit", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
 
             if (steps.isEmpty()) {
@@ -104,8 +100,8 @@ fun RunModeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(24.dp))
-                        .background(TileDark)
-                        .border(1.dp, TileBorder, RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp))
                         .padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -113,7 +109,7 @@ fun RunModeScreen(
                     Text(
                         text = "Edit this routine and add timed steps — Run mode will count each one down here.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MutedText
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Button(
@@ -133,8 +129,8 @@ fun RunModeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(24.dp))
-                        .background(TileDark)
-                        .border(1.dp, TileBorder, RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp))
                         .padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -142,7 +138,7 @@ fun RunModeScreen(
                     Text(
                         text = "STEP ${stepIndex + 1} OF ${steps.size}",
                         style = MaterialTheme.typography.labelLarge,
-                        color = MutedText
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(text = step.name, style = MaterialTheme.typography.headlineLarge)
                     Text(
@@ -157,7 +153,7 @@ fun RunModeScreen(
                             .height(8.dp)
                             .clip(RoundedCornerShape(8.dp)),
                         color = AcidGreen,
-                        trackColor = TileBorder
+                        trackColor = MaterialTheme.colorScheme.outline
                     )
                 }
 
@@ -172,10 +168,10 @@ fun RunModeScreen(
                             color = when {
                                 index < stepIndex -> AcidGreen
                                 index == stepIndex -> MaterialTheme.colorScheme.onSurface
-                                else -> MutedText
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant
                             }
                         )
-                        Text(text = "${s.durationMinutes} min", color = MutedText)
+                        Text(text = "${s.durationMinutes} min", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -212,7 +208,7 @@ fun RunModeScreen(
                     TextButton(
                         onClick = { running = false; onFinish() },
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("Finish now — mark done", color = MutedText) }
+                    ) { Text("Finish now — mark done", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
         }

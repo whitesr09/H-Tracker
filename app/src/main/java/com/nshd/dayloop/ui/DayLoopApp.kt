@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -23,7 +24,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,8 +36,6 @@ import com.nshd.dayloop.ui.screens.ProgressScreen
 import com.nshd.dayloop.ui.screens.SettingsScreen
 import com.nshd.dayloop.ui.screens.TodayScreen
 import com.nshd.dayloop.ui.theme.AcidGreen
-import com.nshd.dayloop.ui.theme.MutedText
-import com.nshd.dayloop.ui.theme.TileDark
 
 private enum class Tab(val label: String, val icon: ImageVector) {
     Today("Today", Icons.Filled.Home),
@@ -65,7 +63,7 @@ fun DayLoopApp(viewModel: AppViewModel) {
 
     Scaffold(
         bottomBar = {
-            NavigationBar(containerColor = TileDark) {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 Tab.entries.forEach { item ->
                     NavigationBarItem(
                         selected = tab == item,
@@ -75,9 +73,9 @@ fun DayLoopApp(viewModel: AppViewModel) {
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = AcidGreen,
                             selectedTextColor = AcidGreen,
-                            unselectedIconColor = MutedText,
-                            unselectedTextColor = MutedText,
-                            indicatorColor = TileDark
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.surface
                         )
                     )
                 }
@@ -92,16 +90,7 @@ fun DayLoopApp(viewModel: AppViewModel) {
             when (current) {
                 Tab.Today -> TodayScreen(viewModel, Modifier.padding(innerPadding))
                 Tab.Progress -> ProgressScreen(viewModel, Modifier.padding(innerPadding))
-                Tab.Settings -> {
-                    val prefs by viewModel.alarmPrefs.collectAsState()
-                    SettingsScreen(
-                        prefs = prefs,
-                        onSoundChange = viewModel::setAlarmSound,
-                        onVibrateChange = viewModel::setAlarmVibrate,
-                        onDefaultModeChange = viewModel::setDefaultRemindMode,
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                Tab.Settings -> SettingsScreen(viewModel, Modifier.padding(innerPadding))
             }
         }
     }

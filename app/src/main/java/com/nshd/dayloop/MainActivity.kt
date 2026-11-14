@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nshd.dayloop.ui.AppViewModel
 import com.nshd.dayloop.ui.DayLoopApp
@@ -14,8 +16,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            DayLoopTheme {
-                val appViewModel: AppViewModel = viewModel()
+            val appViewModel: AppViewModel = viewModel()
+            val darkTheme by appViewModel.themeDark.collectAsState()
+            DayLoopTheme(darkTheme = darkTheme) {
                 DayLoopApp(appViewModel)
             }
         }

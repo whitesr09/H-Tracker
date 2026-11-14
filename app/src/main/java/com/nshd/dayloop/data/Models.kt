@@ -34,6 +34,7 @@ data class TrackItem(
     val pillsPerDose: Int = 1,
     val remind: Boolean = true,
     val alarmStyle: Boolean = false,
+    val weeklyTarget: Int? = null,
     val routineSteps: List<RoutineStep> = emptyList(),
     val weekdays: Set<Int> = (1..7).toSet(),
     val createdAt: Long = System.currentTimeMillis(),

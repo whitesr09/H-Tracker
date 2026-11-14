@@ -1,5 +1,7 @@
 package com.nshd.dayloop.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,35 +20,75 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nshd.dayloop.R
-import com.nshd.dayloop.data.AlarmPrefs
 import com.nshd.dayloop.data.RemindMode
+import com.nshd.dayloop.ui.AppViewModel
 import com.nshd.dayloop.ui.theme.AcidGreen
-import com.nshd.dayloop.ui.theme.MutedText
-import com.nshd.dayloop.ui.theme.OffWhite
-import com.nshd.dayloop.ui.theme.TileBorder
-import com.nshd.dayloop.ui.theme.TileRaised
 
 @Composable
-fun SettingsScreen(
-    prefs: AlarmPrefs,
-    onSoundChange: (Boolean) -> Unit,
-    onVibrateChange: (Boolean) -> Unit,
-    onDefaultModeChange: (RemindMode) -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
+    val prefs by viewModel.alarmPrefs.collectAsState()
+    val themeDark by viewModel.themeDark.collectAsState()
+    val context = LocalContext.current
+
+    var dataStatus by remember { mutableStateOf<String?>(null) }
+    var pendingExport by remember { mutableStateOf<String?>(null) }
+
+    val createDoc = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        val json = pendingExport
+        pendingExport = null
+        if (uri != null && json != null) {
+            dataStatus = try {
+                context.contentResolver.openOutputStream(uri)?.use {
+                    it.write(json.toByteArray())
+                }
+                "Backup exported ✓"
+            } catch (e: Exception) {
+                "Export failed — try again"
+            }
+        }
+    }
+    val openDoc = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val text = context.contentResolver.openInputStream(uri)
+                    ?.bufferedReader()?.readText().orEmpty()
+                viewModel.importJson(text) { ok ->
+                    dataStatus = if (ok) {
+                        "Backup restored ✓"
+                    } else {
+                        "That file is not a DayLoop backup"
+                    }
+                }
+            } catch (e: Exception) {
+                dataStatus = "Import failed — try again"
+            }
+        }
+    }
+
     Column(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -65,32 +107,43 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.headlineLarge
             )
             Text(
-                text = "DayLoop v0.5.0",
+                text = "DayLoop v0.6.0",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MutedText
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            Text(
+                text = "APPEARANCE",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ModeChip("Dark 🌙", themeDark) { viewModel.setThemeDark(true) }
+                ModeChip("Light ☀️", !themeDark) { viewModel.setThemeDark(false) }
+            }
 
             Text(
                 text = "REMINDERS",
                 style = MaterialTheme.typography.labelLarge,
-                color = MutedText,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
             )
             Text(
                 text = "Every timed item can be Off, Notify (a phone notification at its time), or Alarm (rings full-screen until you act). Medications can also snooze a dose by 30 minutes with Later.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MutedText
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = "After a phone restart, reminders re-arm on boot — opening DayLoop once also re-arms everything. If notifications are off, allow them for DayLoop in Android Settings → Apps → DayLoop → Notifications.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MutedText
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Text(
                 text = "ALARM",
                 style = MaterialTheme.typography.labelLarge,
-                color = MutedText,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
             )
             Text(
@@ -99,22 +152,54 @@ fun SettingsScreen(
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ModeChip("Notify", prefs.defaultMode == RemindMode.NOTIFY) {
-                    onDefaultModeChange(RemindMode.NOTIFY)
+                    viewModel.setDefaultRemindMode(RemindMode.NOTIFY)
                 }
                 ModeChip("Alarm ⏰", prefs.defaultMode == RemindMode.ALARM) {
-                    onDefaultModeChange(RemindMode.ALARM)
+                    viewModel.setDefaultRemindMode(RemindMode.ALARM)
                 }
                 ModeChip("Off", prefs.defaultMode == RemindMode.OFF) {
-                    onDefaultModeChange(RemindMode.OFF)
+                    viewModel.setDefaultRemindMode(RemindMode.OFF)
                 }
             }
-            SwitchRow("Alarm sound", prefs.sound, onSoundChange)
-            SwitchRow("Vibration", prefs.vibrate, onVibrateChange)
+            SwitchRow("Alarm sound", prefs.sound) { viewModel.setAlarmSound(it) }
+            SwitchRow("Vibration", prefs.vibrate) { viewModel.setAlarmVibrate(it) }
             Text(
                 text = "Alarms play at your phone's alarm volume — check it's turned up. For alarms to ring exactly on time on iQOO / Vivo phones: Android Settings → Battery → DayLoop → allow high background power use, and keep DayLoop out of battery optimisation.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MutedText
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            Text(
+                text = "DATA",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
+            )
+            Text(
+                text = "Back up everything (items + history) to a JSON file, and restore it on any phone.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        viewModel.exportJson { json ->
+                            pendingExport = json
+                            createDoc.launch("dayloop-backup.json")
+                        }
+                    }
+                ) { Text("Export backup") }
+                OutlinedButton(
+                    onClick = { openDoc.launch(arrayOf("application/json", "text/plain")) }
+                ) { Text("Import backup") }
+            }
+            dataStatus?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AcidGreen
+                )
+            }
         }
 
         DeveloperFooter()
@@ -135,8 +220,8 @@ private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Un
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.Black,
                 checkedTrackColor = AcidGreen,
-                uncheckedThumbColor = OffWhite,
-                uncheckedTrackColor = TileRaised
+                uncheckedThumbColor = MaterialTheme.colorScheme.onSurface,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
             )
         )
     }
@@ -149,8 +234,8 @@ private fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit) {
         onClick = onClick,
         label = { Text(label) },
         colors = FilterChipDefaults.filterChipColors(
-            containerColor = TileRaised,
-            labelColor = OffWhite,
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            labelColor = MaterialTheme.colorScheme.onSurface,
             selectedContainerColor = AcidGreen,
             selectedLabelColor = Color.Black
         ),
@@ -171,7 +256,7 @@ private fun DeveloperFooter() {
         Text(
             text = "DEVELOPER",
             style = MaterialTheme.typography.labelLarge,
-            color = MutedText,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         Text(
@@ -214,8 +299,8 @@ private fun SocialIcon(iconRes: Int, label: String, url: String) {
         modifier = Modifier
             .size(48.dp)
             .clip(CircleShape)
-            .background(TileRaised)
-            .border(1.dp, TileBorder, CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
             .clickable { uriHandler.openUri(url) },
         contentAlignment = Alignment.Center
     ) {

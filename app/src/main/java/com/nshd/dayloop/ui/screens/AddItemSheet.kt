@@ -37,9 +37,6 @@ import com.nshd.dayloop.data.RemindMode
 import com.nshd.dayloop.data.TrackItem
 import com.nshd.dayloop.ui.AppViewModel
 import com.nshd.dayloop.ui.theme.AcidGreen
-import com.nshd.dayloop.ui.theme.OffWhite
-import com.nshd.dayloop.ui.theme.TileDark
-import com.nshd.dayloop.ui.theme.TileRaised
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,10 +76,16 @@ fun AddItemSheet(
     }
     var stepName by remember { mutableStateOf("") }
     var stepMins by remember { mutableStateOf("5") }
+    val selectedDays = remember {
+        androidx.compose.runtime.mutableStateListOf(
+            *(initial?.weekdays ?: (1..7).toSet()).sorted().toTypedArray()
+        )
+    }
+    var weeklyTargetText by remember { mutableStateOf(initial?.weeklyTarget?.toString() ?: "") }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = TileDark
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier
@@ -105,7 +108,7 @@ fun AddItemSheet(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Text(text = "TYPE", style = MaterialTheme.typography.labelLarge, color = com.nshd.dayloop.ui.theme.MutedText)
+            Text(text = "TYPE", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TypeChip("Habit", type == ItemType.HABIT) { type = ItemType.HABIT }
                 TypeChip("Medication", type == ItemType.MEDICATION) { type = ItemType.MEDICATION }
@@ -113,13 +116,38 @@ fun AddItemSheet(
                 TypeChip("Plan", type == ItemType.PLAN) { type = ItemType.PLAN }
             }
 
-            Text(text = "WHEN", style = MaterialTheme.typography.labelLarge, color = com.nshd.dayloop.ui.theme.MutedText)
+            Text(text = "WHEN", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TypeChip("Morning", group == DayGroup.MORNING) { group = DayGroup.MORNING }
                 TypeChip("Afternoon", group == DayGroup.AFTERNOON) { group = DayGroup.AFTERNOON }
                 TypeChip("Evening", group == DayGroup.EVENING) { group = DayGroup.EVENING }
                 TypeChip("Anytime", group == DayGroup.ANYTIME) { group = DayGroup.ANYTIME }
             }
+
+            Text(text = "REPEAT DAYS", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
+                (1..7).forEach { day ->
+                    TypeChip(dayLabels[day - 1], selectedDays.contains(day)) {
+                        if (selectedDays.contains(day)) {
+                            if (selectedDays.size > 1) selectedDays.remove(day)
+                        } else {
+                            selectedDays.add(day)
+                        }
+                    }
+                }
+            }
+            Text(
+                text = if (selectedDays.size == 7) {
+                    "Every day"
+                } else {
+                    selectedDays.sorted().joinToString(", ") {
+                        listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")[it - 1]
+                    }
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -131,8 +159,8 @@ fun AddItemSheet(
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.Black,
                         checkedTrackColor = AcidGreen,
-                        uncheckedThumbColor = OffWhite,
-                        uncheckedTrackColor = TileRaised
+                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurface,
+                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 )
                 Text(text = "Set a time", style = MaterialTheme.typography.bodyLarge)
@@ -181,13 +209,22 @@ fun AddItemSheet(
                         )
                     }
                 }
+                OutlinedTextField(
+                    value = weeklyTargetText,
+                    onValueChange = { weeklyTargetText = it.filter { c -> c.isDigit() }.take(1) },
+                    label = { Text("Weekly target (optional)") },
+                    placeholder = { Text("e.g. 4 = four times a week; blank = daily") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             if (type == ItemType.ROUTINE) {
                 Text(
                     text = "STEPS (FOR RUN MODE)",
                     style = MaterialTheme.typography.labelLarge,
-                    color = com.nshd.dayloop.ui.theme.MutedText
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 steps.forEachIndexed { index, step ->
                     Row(
@@ -200,7 +237,7 @@ fun AddItemSheet(
                             modifier = Modifier.weight(1f)
                         )
                         androidx.compose.material3.TextButton(onClick = { steps.removeAt(index) }) {
-                            Text("Remove", color = com.nshd.dayloop.ui.theme.MutedText)
+                            Text("Remove", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -241,7 +278,7 @@ fun AddItemSheet(
                 Text(
                     text = "REMINDER",
                     style = MaterialTheme.typography.labelLarge,
-                    color = com.nshd.dayloop.ui.theme.MutedText
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TypeChip("Off", mode == RemindMode.OFF) { mode = RemindMode.OFF }
@@ -252,7 +289,7 @@ fun AddItemSheet(
                     Text(
                         text = "Rings full-screen with sound until you act — Done, snooze 10 min, or dismiss.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = com.nshd.dayloop.ui.theme.MutedText
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -311,7 +348,12 @@ fun AddItemSheet(
                             remind = hasTime && mode != RemindMode.OFF,
                             alarmStyle = mode == RemindMode.ALARM,
                             routineSteps = if (type == ItemType.ROUTINE) steps.toList() else emptyList(),
-                            weekdays = initial?.weekdays ?: (1..7).toSet(),
+                            weeklyTarget = if (type == ItemType.HABIT) {
+                                weeklyTargetText.toIntOrNull()?.coerceIn(1, 7)
+                            } else {
+                                null
+                            },
+                            weekdays = selectedDays.toSet(),
                             createdAt = initial?.createdAt ?: System.currentTimeMillis(),
                             archived = initial?.archived ?: false
                         )
@@ -339,8 +381,8 @@ private fun TypeChip(label: String, selected: Boolean, onClick: () -> Unit) {
         onClick = onClick,
         label = { Text(label) },
         colors = FilterChipDefaults.filterChipColors(
-            containerColor = TileRaised,
-            labelColor = OffWhite,
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            labelColor = MaterialTheme.colorScheme.onSurface,
             selectedContainerColor = AcidGreen,
             selectedLabelColor = Color.Black
         ),

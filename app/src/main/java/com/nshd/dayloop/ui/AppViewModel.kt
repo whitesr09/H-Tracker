@@ -38,7 +38,10 @@ data class TodayUiState(
     /** Oldest → today, 105 days; -1f marks a day with nothing due. */
     val heatmap: List<Float> = emptyList(),
     val strengths: List<HabitStrength> = emptyList(),
-    val weekCheckins: Int = 0
+    val weekCheckins: Int = 0,
+    val allItems: List<TrackItem> = emptyList(),
+    /** Done-count this week (Mon–today) for items that carry a weekly target. */
+    val weeklyProgress: Map<String, Int> = emptyMap()
 )
 
 class AppViewModel(application: Application) : AndroidViewModel(application) {
@@ -75,6 +78,21 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    val themeDark: StateFlow<Boolean> = store.themeDark
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    fun setThemeDark(dark: Boolean) {
+        viewModelScope.launch { store.saveThemeDark(dark) }
+    }
+
+    fun exportJson(onReady: (String) -> Unit) {
+        viewModelScope.launch { onReady(store.exportJson()) }
+    }
+
+    fun importJson(json: String, onDone: (Boolean) -> Unit) {
+        viewModelScope.launch { onDone(store.importJson(json)) }
+    }
+
     init {
         // Keep reminder alarms in sync with the data: any item or
         // completion change re-arms the next due reminder for each item.
@@ -108,7 +126,24 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             .sortedWith(compareBy({ it.group.ordinal }, { it.timeMinutes ?: 9999 }, { it.createdAt }))
         val todayMap = comps.filter { it.epochDay == todayEpoch }.associateBy { it.itemId }
 
-        val fractions = due.map { fractionOf(it, todayMap[it.id]) }
+        // Weekly-target items: done count from Monday to today.
+        val mondayEpoch = today.minusDays((dow - 1).toLong()).toEpochDay()
+        val weeklyProgress = items.filter { it.weeklyTarget != null }.associate { item ->
+            item.id to comps.count { c ->
+                c.itemId == item.id && c.epochDay in mondayEpoch..todayEpoch &&
+                    (c.status == Completion.DONE || c.status == Completion.TAKEN)
+            }
+        }
+
+        val fractions = due.map { item ->
+            val base = fractionOf(item, todayMap[item.id])
+            val target = item.weeklyTarget
+            if (target != null && (weeklyProgress[item.id] ?: 0) >= target) {
+                maxOf(base, 1f)
+            } else {
+                base
+            }
+        }
         val overall = if (fractions.isEmpty()) 0f else fractions.average().toFloat()
         val doneCount = fractions.count { it >= 1f }
 
@@ -116,7 +151,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         var offset = 0
         while (offset < 365) {
             val day = today.minusDays(offset.toLong())
-            val dayDue = items.filter { it.dueOn(day.dayOfWeek.value) }
+            val dayDue = items.filter { it.dueOn(day.dayOfWeek.value) && it.weeklyTarget == null }
             if (dayDue.isEmpty()) {
                 offset++
                 continue
@@ -154,7 +189,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val compsByDay = comps.groupBy { it.epochDay }
         val heatmap = (104 downTo 0).map { back ->
             val day = today.minusDays(back.toLong())
-            val dayDue = items.filter { it.dueOn(day.dayOfWeek.value) }
+            val dayDue = items.filter { it.dueOn(day.dayOfWeek.value) && it.weeklyTarget == null }
             if (dayDue.isEmpty()) {
                 -1f
             } else {
@@ -165,7 +200,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
         // Forgiving strength per habit: average daily fraction over the
         // last 28 days (misses lower it gradually, never wipe it).
-        val strengths = items.filter { it.type == ItemType.HABIT && !it.archived }.map { habit ->
+        val strengths = items.filter {
+            it.type == ItemType.HABIT && !it.archived && it.weeklyTarget == null
+        }.map { habit ->
             var sum = 0f
             var days = 0
             for (back in 0..27) {
@@ -201,7 +238,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             lowStock = lowStock,
             heatmap = heatmap,
             strengths = strengths,
-            weekCheckins = weekCheckins
+            weekCheckins = weekCheckins,
+            allItems = items,
+            weeklyProgress = weeklyProgress
         )
     }
 

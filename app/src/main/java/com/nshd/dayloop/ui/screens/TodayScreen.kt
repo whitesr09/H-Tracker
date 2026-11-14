@@ -64,10 +64,6 @@ import com.nshd.dayloop.data.TrackItem
 import com.nshd.dayloop.ui.AppViewModel
 import com.nshd.dayloop.ui.TodayUiState
 import com.nshd.dayloop.ui.theme.AcidGreen
-import com.nshd.dayloop.ui.theme.MutedText
-import com.nshd.dayloop.ui.theme.TileBorder
-import com.nshd.dayloop.ui.theme.TileDark
-import com.nshd.dayloop.ui.theme.TileRaised
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -99,7 +95,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(text = "DAYLOOP", style = MaterialTheme.typography.labelLarge, color = AcidGreen)
                     Text(text = "Today", style = MaterialTheme.typography.headlineLarge)
-                    Text(text = todayLabel, style = MaterialTheme.typography.bodyMedium, color = MutedText)
+                    Text(text = todayLabel, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 IconButton(
                     onClick = { showSheet = true },
@@ -135,7 +131,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                         Text(
                             text = group.name,
                             style = MaterialTheme.typography.labelLarge,
-                            color = MutedText,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 6.dp)
                         )
                     }
@@ -143,6 +139,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                         ItemRow(
                             item = item,
                             completion = state.todayCompletions[item.id],
+                            weeklyDone = item.weeklyTarget?.let { state.weeklyProgress[item.id] ?: 0 },
                             onToggle = { viewModel.toggle(item) },
                             onCount = { delta -> viewModel.changeCount(item, delta) },
                             onSkip = { viewModel.markSkipped(item) },
@@ -193,9 +190,9 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
     deleteTarget?.let { target ->
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
-            containerColor = TileDark,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("Remove \"${target.name}\"?") },
-            text = { Text("This removes the item and its history.", color = MutedText) },
+            text = { Text("This removes the item and its history.", color = MaterialTheme.colorScheme.onSurfaceVariant) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteItem(target)
@@ -203,7 +200,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 }) { Text("Remove", color = AcidGreen) }
             },
             dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) { Text("Keep", color = MutedText) }
+                TextButton(onClick = { deleteTarget = null }) { Text("Keep", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         )
     }
@@ -227,8 +224,8 @@ private fun HeroRow(state: TodayUiState) {
                 .weight(1.35f)
                 .fillMaxHeight()
                 .clip(RoundedCornerShape(24.dp))
-                .background(TileDark)
-                .border(1.dp, TileBorder, RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp))
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -236,7 +233,7 @@ private fun HeroRow(state: TodayUiState) {
             Box(contentAlignment = Alignment.Center) {
                 Canvas(modifier = Modifier.size(86.dp)) {
                     drawArc(
-                        color = TileRaised,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
                         startAngle = -90f,
                         sweepAngle = 360f,
                         useCenter = false,
@@ -266,7 +263,7 @@ private fun HeroRow(state: TodayUiState) {
                 Text(
                     text = if (state.dueItems.isEmpty()) "Add your first item to close the loop." else "Keep going.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MutedText
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -302,7 +299,7 @@ private fun RefillTile(lowStock: List<TrackItem>) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(TileDark)
+            .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, AcidGreen, RoundedCornerShape(20.dp))
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp)
@@ -316,7 +313,7 @@ private fun RefillTile(lowStock: List<TrackItem>) {
         Text(
             text = "About ${first.daysOfPillsLeft()} days at the current dose.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MutedText
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -332,8 +329,8 @@ private fun MiniTile(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(TileDark)
-            .border(1.dp, TileBorder, RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
     ) {
@@ -342,7 +339,7 @@ private fun MiniTile(
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Icon(icon, contentDescription = label, tint = AcidGreen, modifier = Modifier.size(16.dp))
-            Text(text = label, style = MaterialTheme.typography.labelLarge, color = MutedText)
+            Text(text = label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text(text = value, style = MaterialTheme.typography.titleMedium, maxLines = 2)
     }
@@ -354,8 +351,8 @@ private fun EmptyTile() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(TileDark)
-            .border(1.dp, TileBorder, RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp))
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -363,7 +360,7 @@ private fun EmptyTile() {
         Text(
             text = "Tap + to add a habit, a medication, a routine or a plan — then close your loop one tap at a time.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MutedText
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -373,6 +370,7 @@ private fun EmptyTile() {
 private fun ItemRow(
     item: TrackItem,
     completion: Completion?,
+    weeklyDone: Int? = null,
     onToggle: () -> Unit,
     onCount: (Int) -> Unit,
     onSkip: () -> Unit,
@@ -399,8 +397,8 @@ private fun ItemRow(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(TileDark)
-            .border(1.dp, TileBorder, RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
             .combinedClickable(onClick = { onToggle() }, onLongClick = onLongPress)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -412,15 +410,15 @@ private fun ItemRow(
                 .graphicsLayer { scaleX = scale; scaleY = scale }
                 .clip(CircleShape)
                 .background(circleColor)
-                .border(2.dp, if (done) AcidGreen else TileBorder, CircleShape),
+                .border(2.dp, if (done) AcidGreen else MaterialTheme.colorScheme.outline, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             if (done) {
                 Icon(Icons.Filled.Check, contentDescription = "Done", tint = Color.Black, modifier = Modifier.size(20.dp))
             } else if (skipped) {
-                Icon(Icons.Filled.Close, contentDescription = "Skipped", tint = MutedText, modifier = Modifier.size(18.dp))
+                Icon(Icons.Filled.Close, contentDescription = "Skipped", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
             } else {
-                Icon(typeIcon(item.type), contentDescription = item.type.name, tint = MutedText, modifier = Modifier.size(18.dp))
+                Icon(typeIcon(item.type), contentDescription = item.type.name, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
             }
         }
 
@@ -431,12 +429,12 @@ private fun ItemRow(
             Text(
                 text = item.name,
                 style = MaterialTheme.typography.titleMedium,
-                color = if (skipped) MutedText else MaterialTheme.colorScheme.onSurface
+                color = if (skipped) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = subText(item, completion),
+                text = subText(item, completion, weeklyDone),
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (done) AcidGreen else MutedText
+                color = if (done) AcidGreen else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
@@ -461,7 +459,7 @@ private fun ItemRow(
             Icon(
                 Icons.Filled.Edit,
                 contentDescription = "Edit ${item.name}",
-                tint = MutedText,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(15.dp)
             )
         }
@@ -495,7 +493,7 @@ private fun ItemRow(
                     onClick = onSkip,
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 0.dp)
                 ) {
-                    Text(if (skipped) "Skipped" else "Skip", color = MutedText)
+                    Text(if (skipped) "Skipped" else "Skip", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -509,8 +507,8 @@ private fun StepperButton(label: String, onClick: () -> Unit) {
         modifier = Modifier
             .size(32.dp)
             .clip(CircleShape)
-            .background(TileRaised)
-            .border(1.dp, TileBorder, CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
             .combinedClickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -525,7 +523,7 @@ private fun typeIcon(type: ItemType): ImageVector = when (type) {
     ItemType.PLAN -> Icons.Filled.EventNote
 }
 
-private fun subText(item: TrackItem, completion: Completion?): String {
+private fun subText(item: TrackItem, completion: Completion?, weeklyDone: Int? = null): String {
     val parts = mutableListOf<String>()
     item.timeMinutes?.let { parts.add(formatTime(it)) }
     when (item.type) {
@@ -544,6 +542,10 @@ private fun subText(item: TrackItem, completion: Completion?): String {
                 parts.add("${completion?.value ?: 0} of ${item.targetCount}$unit")
             } else if (completion?.status == Completion.DONE) {
                 parts.add("Done ${formatMillis(completion.atMillis)}")
+            }
+            item.weeklyTarget?.let { target ->
+                val done = weeklyDone ?: 0
+                parts.add(if (done >= target) "Weekly goal met ✓ $done/$target" else "$done/$target this week")
             }
         }
         ItemType.ROUTINE -> {
