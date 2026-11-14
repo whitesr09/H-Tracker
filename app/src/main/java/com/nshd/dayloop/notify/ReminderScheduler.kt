@@ -22,6 +22,7 @@ object ReminderScheduler {
     const val EXTRA_NAME = "item_name"
     const val EXTRA_DETAIL = "item_detail"
     const val EXTRA_SNOOZE = "is_snooze"
+    const val EXTRA_ALARM = "is_alarm"
 
     private const val SNOOZE_OFFSET = 1_000_003
 
@@ -138,6 +139,7 @@ object ReminderScheduler {
                     }
                 )
                 putExtra(EXTRA_SNOOZE, snooze)
+                putExtra(EXTRA_ALARM, item.alarmStyle && !snooze)
             }
         }
         return PendingIntent.getBroadcast(

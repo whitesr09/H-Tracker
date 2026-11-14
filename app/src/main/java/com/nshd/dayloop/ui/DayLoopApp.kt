@@ -23,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -91,7 +92,16 @@ fun DayLoopApp(viewModel: AppViewModel) {
             when (current) {
                 Tab.Today -> TodayScreen(viewModel, Modifier.padding(innerPadding))
                 Tab.Progress -> ProgressScreen(viewModel, Modifier.padding(innerPadding))
-                Tab.Settings -> SettingsScreen(Modifier.padding(innerPadding))
+                Tab.Settings -> {
+                    val prefs by viewModel.alarmPrefs.collectAsState()
+                    SettingsScreen(
+                        prefs = prefs,
+                        onSoundChange = viewModel::setAlarmSound,
+                        onVibrateChange = viewModel::setAlarmVibrate,
+                        onDefaultModeChange = viewModel::setDefaultRemindMode,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
             }
         }
     }

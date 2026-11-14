@@ -76,6 +76,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
     val state by viewModel.state.collectAsState()
+    val alarmPrefs by viewModel.alarmPrefs.collectAsState()
     var showSheet by remember { mutableStateOf(false) }
     var runTarget by remember { mutableStateOf<TrackItem?>(null) }
     var editTarget by remember { mutableStateOf<TrackItem?>(null) }
@@ -162,7 +163,8 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
     if (showSheet) {
         AddItemSheet(
             onDismiss = { showSheet = false },
-            onAdd = { viewModel.addItem(it) }
+            onAdd = { viewModel.addItem(it) },
+            defaultMode = alarmPrefs.defaultMode
         )
     }
 

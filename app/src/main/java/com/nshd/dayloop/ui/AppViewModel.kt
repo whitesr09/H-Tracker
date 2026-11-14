@@ -50,6 +50,31 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         buildState(items, comps)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TodayUiState())
 
+    val alarmPrefs: StateFlow<com.nshd.dayloop.data.AlarmPrefs> = store.alarmPrefs
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            com.nshd.dayloop.data.AlarmPrefs()
+        )
+
+    fun setAlarmSound(value: Boolean) {
+        viewModelScope.launch {
+            store.saveAlarmPrefs(alarmPrefs.value.copy(sound = value))
+        }
+    }
+
+    fun setAlarmVibrate(value: Boolean) {
+        viewModelScope.launch {
+            store.saveAlarmPrefs(alarmPrefs.value.copy(vibrate = value))
+        }
+    }
+
+    fun setDefaultRemindMode(mode: com.nshd.dayloop.data.RemindMode) {
+        viewModelScope.launch {
+            store.saveAlarmPrefs(alarmPrefs.value.copy(defaultMode = mode))
+        }
+    }
+
     init {
         // Keep reminder alarms in sync with the data: any item or
         // completion change re-arms the next due reminder for each item.

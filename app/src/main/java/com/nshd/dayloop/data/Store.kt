@@ -1,6 +1,7 @@
 package com.nshd.dayloop.data
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -15,6 +16,27 @@ class DayLoopStore(private val context: Context) {
 
     private val itemsKey = stringPreferencesKey("items_json")
     private val completionsKey = stringPreferencesKey("completions_json")
+    private val alarmSoundKey = booleanPreferencesKey("alarm_sound")
+    private val alarmVibrateKey = booleanPreferencesKey("alarm_vibrate")
+    private val alarmDefaultModeKey = stringPreferencesKey("alarm_default_mode")
+
+    val alarmPrefs: Flow<AlarmPrefs> = context.dataStore.data.map { prefs ->
+        AlarmPrefs(
+            sound = prefs[alarmSoundKey] ?: true,
+            vibrate = prefs[alarmVibrateKey] ?: true,
+            defaultMode = runCatching {
+                RemindMode.valueOf(prefs[alarmDefaultModeKey] ?: "NOTIFY")
+            }.getOrDefault(RemindMode.NOTIFY)
+        )
+    }
+
+    suspend fun saveAlarmPrefs(prefs: AlarmPrefs) {
+        context.dataStore.edit { store ->
+            store[alarmSoundKey] = prefs.sound
+            store[alarmVibrateKey] = prefs.vibrate
+            store[alarmDefaultModeKey] = prefs.defaultMode.name
+        }
+    }
 
     val items: Flow<List<TrackItem>> = context.dataStore.data.map { prefs ->
         parseItems(prefs[itemsKey] ?: "[]")
@@ -83,6 +105,7 @@ class DayLoopStore(private val context: Context) {
                     pillsLeft = if (!o.has("pills") || o.isNull("pills")) null else o.getInt("pills"),
                     pillsPerDose = o.optInt("perDose", 1).coerceAtLeast(1),
                     remind = o.optBoolean("remind", true),
+                    alarmStyle = o.optBoolean("alarm", false),
                     routineSteps = parseSteps(o.optJSONArray("steps")),
                     weekdays = o.optString("days", "1,2,3,4,5,6,7")
                         .split(",").filter { it.isNotBlank() }.map { it.toInt() }.toSet(),
@@ -110,6 +133,7 @@ class DayLoopStore(private val context: Context) {
             if (item.pillsLeft == null) o.put("pills", JSONObject.NULL) else o.put("pills", item.pillsLeft)
             o.put("perDose", item.pillsPerDose)
             o.put("remind", item.remind)
+            o.put("alarm", item.alarmStyle)
             val stepsArr = JSONArray()
             item.routineSteps.forEach { step ->
                 val so = JSONObject()

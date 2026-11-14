@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.nshd.dayloop.data.DayGroup
 import com.nshd.dayloop.data.HabitKind
 import com.nshd.dayloop.data.ItemType
+import com.nshd.dayloop.data.RemindMode
 import com.nshd.dayloop.data.TrackItem
 import com.nshd.dayloop.ui.AppViewModel
 import com.nshd.dayloop.ui.theme.AcidGreen
@@ -45,7 +46,8 @@ import com.nshd.dayloop.ui.theme.TileRaised
 fun AddItemSheet(
     onDismiss: () -> Unit,
     onAdd: (TrackItem) -> Unit,
-    initial: TrackItem? = null
+    initial: TrackItem? = null,
+    defaultMode: RemindMode = RemindMode.NOTIFY
 ) {
     var name by remember { mutableStateOf(initial?.name ?: "") }
     var type by remember { mutableStateOf(initial?.type ?: ItemType.HABIT) }
@@ -56,7 +58,17 @@ fun AddItemSheet(
     var dose by remember { mutableStateOf(initial?.doseLabel ?: "") }
     var pills by remember { mutableStateOf(initial?.pillsLeft?.toString() ?: "") }
     var perDose by remember { mutableStateOf(initial?.pillsPerDose?.toString() ?: "1") }
-    var remind by remember { mutableStateOf(initial?.remind ?: true) }
+    var mode by remember {
+        mutableStateOf(
+            initial?.let {
+                when {
+                    !it.remind -> RemindMode.OFF
+                    it.alarmStyle -> RemindMode.ALARM
+                    else -> RemindMode.NOTIFY
+                }
+            } ?: defaultMode
+        )
+    }
     var hasTime by remember { mutableStateOf(initial?.timeMinutes != null) }
     var hour by remember { mutableStateOf(initial?.timeMinutes?.let { (it / 60).toString() } ?: "7") }
     var minute by remember { mutableStateOf(initial?.timeMinutes?.let { (it % 60).toString() } ?: "30") }
@@ -226,21 +238,22 @@ fun AddItemSheet(
             }
 
             if (hasTime) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Switch(
-                        checked = remind,
-                        onCheckedChange = { remind = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.Black,
-                            checkedTrackColor = AcidGreen,
-                            uncheckedThumbColor = OffWhite,
-                            uncheckedTrackColor = TileRaised
-                        )
+                Text(
+                    text = "REMINDER",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = com.nshd.dayloop.ui.theme.MutedText
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TypeChip("Off", mode == RemindMode.OFF) { mode = RemindMode.OFF }
+                    TypeChip("Notify", mode == RemindMode.NOTIFY) { mode = RemindMode.NOTIFY }
+                    TypeChip("Alarm ⏰", mode == RemindMode.ALARM) { mode = RemindMode.ALARM }
+                }
+                if (mode == RemindMode.ALARM) {
+                    Text(
+                        text = "Rings full-screen with sound until you act — Done, snooze 10 min, or dismiss.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = com.nshd.dayloop.ui.theme.MutedText
                     )
-                    Text(text = "Remind me at that time", style = MaterialTheme.typography.bodyLarge)
                 }
             }
 
@@ -295,7 +308,8 @@ fun AddItemSheet(
                             doseLabel = dose.trim(),
                             pillsLeft = if (type == ItemType.MEDICATION) pills.toIntOrNull()?.coerceIn(0, 9999) else null,
                             pillsPerDose = perDose.toIntOrNull()?.coerceIn(1, 99) ?: 1,
-                            remind = hasTime && remind,
+                            remind = hasTime && mode != RemindMode.OFF,
+                            alarmStyle = mode == RemindMode.ALARM,
                             routineSteps = if (type == ItemType.ROUTINE) steps.toList() else emptyList(),
                             weekdays = initial?.weekdays ?: (1..7).toSet(),
                             createdAt = initial?.createdAt ?: System.currentTimeMillis(),

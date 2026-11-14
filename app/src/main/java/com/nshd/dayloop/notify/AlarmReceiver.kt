@@ -15,8 +15,23 @@ class AlarmReceiver : BroadcastReceiver() {
         val detail = intent.getStringExtra(ReminderScheduler.EXTRA_DETAIL).orEmpty()
         val itemId = intent.getStringExtra(ReminderScheduler.EXTRA_ITEM_ID).orEmpty()
         val snooze = intent.getBooleanExtra(ReminderScheduler.EXTRA_SNOOZE, false)
+        val alarmStyle = intent.getBooleanExtra(ReminderScheduler.EXTRA_ALARM, false)
 
         ReminderScheduler.ensureChannel(context)
+
+        // Alarm-style items ring full-screen via the ring service; if the
+        // service cannot start, fall through to a normal notification.
+        if (alarmStyle && !snooze) {
+            try {
+                androidx.core.content.ContextCompat.startForegroundService(
+                    context,
+                    AlarmRingService.startIntent(context, itemId, name, detail)
+                )
+                return
+            } catch (e: Exception) {
+                // Fall through to the notification below.
+            }
+        }
 
         val openIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
