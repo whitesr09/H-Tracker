@@ -102,6 +102,15 @@ class DayLoopStore(private val context: Context) {
         }
     }
 
+    suspend fun updateItems(updated: List<TrackItem>) {
+        if (updated.isEmpty()) return
+        context.dataStore.edit { prefs ->
+            val byId = updated.associateBy { it.id }
+            val list = parseItems(prefs[itemsKey] ?: "[]").map { byId[it.id] ?: it }
+            prefs[itemsKey] = itemsToJson(list)
+        }
+    }
+
     suspend fun deleteItem(id: String) {
         context.dataStore.edit { prefs ->
             val list = parseItems(prefs[itemsKey] ?: "[]").filterNot { it.id == id }
@@ -148,6 +157,7 @@ class DayLoopStore(private val context: Context) {
                     remind = o.optBoolean("remind", true),
                     alarmStyle = o.optBoolean("alarm", false),
                     weeklyTarget = if (!o.has("wt") || o.isNull("wt")) null else o.getInt("wt"),
+                    sortOrder = o.optInt("ord", 0),
                     routineSteps = parseSteps(o.optJSONArray("steps")),
                     weekdays = o.optString("days", "1,2,3,4,5,6,7")
                         .split(",").filter { it.isNotBlank() }.map { it.toInt() }.toSet(),
@@ -177,6 +187,7 @@ class DayLoopStore(private val context: Context) {
             o.put("remind", item.remind)
             o.put("alarm", item.alarmStyle)
             if (item.weeklyTarget == null) o.put("wt", JSONObject.NULL) else o.put("wt", item.weeklyTarget)
+            o.put("ord", item.sortOrder)
             val stepsArr = JSONArray()
             item.routineSteps.forEach { step ->
                 val so = JSONObject()

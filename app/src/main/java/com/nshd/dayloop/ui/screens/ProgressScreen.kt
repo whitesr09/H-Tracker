@@ -61,6 +61,40 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
             }
         }
         item {
+            val review = state.weekReview
+            val diff = review.thisWeekCheckins - review.lastWeekCheckins
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "WEEK REVIEW",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "This week: ${review.thisWeekPct}% complete · ${review.thisWeekCheckins} check-ins",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = "Best day: ${review.bestDayLabel} (${review.bestDayCount} check-ins)",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = "Last week: ${review.lastWeekCheckins} check-ins" +
+                        if (diff > 0) " · ▲ $diff vs last week" else if (diff < 0) " · ▼ ${-diff} vs last week" else " · same as last week",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (diff >= 0) AcidGreen else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)

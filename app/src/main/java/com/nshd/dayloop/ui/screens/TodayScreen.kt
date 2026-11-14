@@ -27,6 +27,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventNote
@@ -74,6 +77,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
     val state by viewModel.state.collectAsState()
     val alarmPrefs by viewModel.alarmPrefs.collectAsState()
     var showSheet by remember { mutableStateOf(false) }
+    var sortMode by remember { mutableStateOf(false) }
     var runTarget by remember { mutableStateOf<TrackItem?>(null) }
     var editTarget by remember { mutableStateOf<TrackItem?>(null) }
     var deleteTarget by remember { mutableStateOf<TrackItem?>(null) }
@@ -97,15 +101,42 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                     Text(text = "Today", style = MaterialTheme.typography.headlineLarge)
                     Text(text = todayLabel, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                IconButton(
-                    onClick = { showSheet = true },
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(AcidGreen)
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add item", tint = Color.Black, modifier = Modifier.size(26.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    IconButton(
+                        onClick = { sortMode = !sortMode },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                    ) {
+                        Icon(
+                            Icons.Filled.SwapVert,
+                            contentDescription = "Reorder items",
+                            tint = if (sortMode) AcidGreen else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = { showSheet = true },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(AcidGreen)
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = "Add item", tint = Color.Black, modifier = Modifier.size(26.dp))
+                    }
                 }
+            }
+        }
+
+        if (sortMode) {
+            item {
+                Text(
+                    text = "Reorder mode — move items with ↑ ↓ inside each section, then tap ⇅ again to finish.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AcidGreen
+                )
             }
         }
 
@@ -146,6 +177,9 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                             onLater = { viewModel.markLater(item) },
                             onRun = { runTarget = item },
                             onEdit = { editTarget = item },
+                            sortMode = sortMode,
+                            onMoveUp = { viewModel.move(item, -1) },
+                            onMoveDown = { viewModel.move(item, 1) },
                             onLongPress = { deleteTarget = item },
                             modifier = Modifier.animateItem()
                         )
@@ -379,6 +413,9 @@ private fun ItemRow(
     onRun: () -> Unit,
     onEdit: () -> Unit,
     onLongPress: () -> Unit,
+    sortMode: Boolean = false,
+    onMoveUp: () -> Unit = {},
+    onMoveDown: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val done = completion?.status == Completion.DONE || completion?.status == Completion.TAKEN
@@ -400,7 +437,10 @@ private fun ItemRow(
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
-            .combinedClickable(onClick = { onToggle() }, onLongClick = onLongPress)
+            .combinedClickable(
+                onClick = { if (!sortMode) onToggle() },
+                onLongClick = if (sortMode) null else onLongPress
+            )
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -439,6 +479,26 @@ private fun ItemRow(
             )
         }
 
+        if (sortMode) {
+            Column {
+                IconButton(onClick = onMoveUp, modifier = Modifier.size(30.dp)) {
+                    Icon(
+                        Icons.Filled.KeyboardArrowUp,
+                        contentDescription = "Move ${item.name} up",
+                        tint = AcidGreen,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                IconButton(onClick = onMoveDown, modifier = Modifier.size(30.dp)) {
+                    Icon(
+                        Icons.Filled.KeyboardArrowDown,
+                        contentDescription = "Move ${item.name} down",
+                        tint = AcidGreen,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+        } else {
         if (item.type == ItemType.ROUTINE && !done) {
             IconButton(
                 onClick = onRun,
@@ -497,6 +557,7 @@ private fun ItemRow(
                     Text(if (skipped) "Skipped" else "Skip", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+        }
         }
     }
 }

@@ -41,7 +41,16 @@ data class TodayUiState(
     val weekCheckins: Int = 0,
     val allItems: List<TrackItem> = emptyList(),
     /** Done-count this week (Mon–today) for items that carry a weekly target. */
-    val weeklyProgress: Map<String, Int> = emptyMap()
+    val weeklyProgress: Map<String, Int> = emptyMap(),
+    val weekReview: WeekReview = WeekReview()
+)
+
+data class WeekReview(
+    val thisWeekPct: Int = 0,
+    val bestDayLabel: String = "—",
+    val bestDayCount: Int = 0,
+    val thisWeekCheckins: Int = 0,
+    val lastWeekCheckins: Int = 0
 )
 
 class AppViewModel(application: Application) : AndroidViewModel(application) {
@@ -123,7 +132,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val dow = today.dayOfWeek.value
 
         val due = items.filter { it.dueOn(dow) }
-            .sortedWith(compareBy({ it.group.ordinal }, { it.timeMinutes ?: 9999 }, { it.createdAt }))
+            .sortedWith(
+                compareBy(
+                    { it.group.ordinal },
+                    { it.sortOrder },
+                    { it.timeMinutes ?: 9999 },
+                    { it.createdAt }
+                )
+            )
         val todayMap = comps.filter { it.epochDay == todayEpoch }.associateBy { it.itemId }
 
         // Weekly-target items: done count from Monday to today.
@@ -225,6 +241,41 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 (it.status == Completion.DONE || it.status == Completion.TAKEN)
         }
 
+        // Week review (Mon–today vs the full week before it).
+        val reviewDays = (0 until dow).map { today.minusDays((dow - 1 - it).toLong()) }
+        val dayFractions = reviewDays.map { day ->
+            val dayDue = items.filter { it.dueOn(day.dayOfWeek.value) && it.weeklyTarget == null }
+            if (dayDue.isEmpty()) {
+                null
+            } else {
+                val dayMap = compsByDay[day.toEpochDay()].orEmpty().associateBy { it.itemId }
+                dayDue.map { fractionOf(it, dayMap[it.id]) }.average().toFloat()
+            }
+        }
+        val validFractions = dayFractions.filterNotNull()
+        val thisWeekPct = if (validFractions.isEmpty()) 0 else (validFractions.average() * 100).toInt()
+        val checkinsOn = { day: LocalDate ->
+            comps.count {
+                it.epochDay == day.toEpochDay() &&
+                    (it.status == Completion.DONE || it.status == Completion.TAKEN)
+            }
+        }
+        val bestDay = reviewDays.maxByOrNull { checkinsOn(it) }
+        val weekReview = WeekReview(
+            thisWeekPct = thisWeekPct,
+            bestDayLabel = bestDay?.dayOfWeek
+                ?.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH) ?: "—",
+            bestDayCount = bestDay?.let { checkinsOn(it) } ?: 0,
+            thisWeekCheckins = comps.count {
+                it.epochDay in mondayEpoch..todayEpoch &&
+                    (it.status == Completion.DONE || it.status == Completion.TAKEN)
+            },
+            lastWeekCheckins = comps.count {
+                it.epochDay in (mondayEpoch - 7) until mondayEpoch &&
+                    (it.status == Completion.DONE || it.status == Completion.TAKEN)
+            }
+        )
+
         return TodayUiState(
             dueItems = due,
             todayCompletions = todayMap,
@@ -240,7 +291,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             strengths = strengths,
             weekCheckins = weekCheckins,
             allItems = items,
-            weeklyProgress = weeklyProgress
+            weeklyProgress = weeklyProgress,
+            weekReview = weekReview
         )
     }
 
@@ -316,6 +368,23 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 store.setCompletion(Completion(item.id, today, Completion.LATER, 0))
                 ReminderScheduler.snooze(app, item)
             }
+        }
+    }
+
+    /** Moves an item one step within its day-group; order persists. */
+    fun move(item: TrackItem, direction: Int) {
+        val siblings = state.value.allItems
+            .filter { it.group == item.group && !it.archived }
+            .sortedWith(compareBy({ it.sortOrder }, { it.timeMinutes ?: 9999 }, { it.createdAt }))
+        val index = siblings.indexOfFirst { it.id == item.id }
+        val target = index + direction
+        if (index < 0 || target !in siblings.indices) return
+        val reordered = siblings.toMutableList().apply { add(target, removeAt(index)) }
+        val originalOrders = siblings.associate { it.id to it.sortOrder }
+        val changed = reordered.mapIndexed { i, it -> it.copy(sortOrder = i * 10) }
+            .filter { it.sortOrder != originalOrders[it.id] }
+        if (changed.isNotEmpty()) {
+            viewModelScope.launch { store.updateItems(changed) }
         }
     }
 
