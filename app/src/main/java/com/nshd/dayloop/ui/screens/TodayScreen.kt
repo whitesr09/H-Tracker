@@ -230,10 +230,11 @@ private fun HeroRow(state: TodayUiState) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            val ringTrack = MaterialTheme.colorScheme.surfaceVariant
             Box(contentAlignment = Alignment.Center) {
                 Canvas(modifier = Modifier.size(86.dp)) {
                     drawArc(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        color = ringTrack,
                         startAngle = -90f,
                         sweepAngle = 360f,
                         useCenter = false,
