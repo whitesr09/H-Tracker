@@ -48,6 +48,7 @@ import com.nshd.dayloop.ui.theme.AcidGreen
 fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
     val prefs by viewModel.alarmPrefs.collectAsState()
     val themeDark by viewModel.themeDark.collectAsState()
+    val appState by viewModel.state.collectAsState()
     val context = LocalContext.current
 
     var dataStatus by remember { mutableStateOf<String?>(null) }
@@ -107,7 +108,7 @@ fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.headlineLarge
             )
             Text(
-                text = "DayLoop v0.7.0",
+                text = "DayLoop v0.8.0",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -199,6 +200,31 @@ fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = AcidGreen
                 )
+            }
+
+            val archivedItems = appState.allItems.filter { it.archived }
+            if (archivedItems.isNotEmpty()) {
+                Text(
+                    text = "ARCHIVED",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
+                )
+                archivedItems.forEach { archivedItem ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = archivedItem.name,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        OutlinedButton(
+                            onClick = { viewModel.setArchived(archivedItem, false) }
+                        ) { Text("Restore") }
+                    }
+                }
             }
         }
 

@@ -42,7 +42,10 @@ data class TodayUiState(
     val allItems: List<TrackItem> = emptyList(),
     /** Done-count this week (Mon–today) for items that carry a weekly target. */
     val weeklyProgress: Map<String, Int> = emptyMap(),
-    val weekReview: WeekReview = WeekReview()
+    val weekReview: WeekReview = WeekReview(),
+    val monthLabel: String = "",
+    val monthOffset: Int = 0,
+    val monthFractions: List<Float> = emptyList()
 )
 
 data class WeekReview(
@@ -292,7 +295,29 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             weekCheckins = weekCheckins,
             allItems = items,
             weeklyProgress = weeklyProgress,
-            weekReview = weekReview
+            weekReview = weekReview,
+            monthLabel = today.month
+                .getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH)
+                .uppercase() + " " + today.year,
+            monthOffset = today.withDayOfMonth(1).dayOfWeek.value - 1,
+            monthFractions = (1..today.lengthOfMonth()).map { dayOfMonth ->
+                val day = today.withDayOfMonth(dayOfMonth)
+                when {
+                    day.isAfter(today) -> -2f
+                    else -> {
+                        val dayDue = items.filter {
+                            it.dueOn(day.dayOfWeek.value) && it.weeklyTarget == null
+                        }
+                        if (dayDue.isEmpty()) {
+                            -1f
+                        } else {
+                            val dayMap = compsByDay[day.toEpochDay()].orEmpty()
+                                .associateBy { it.itemId }
+                            dayDue.map { fractionOf(it, dayMap[it.id]) }.average().toFloat()
+                        }
+                    }
+                }
+            }
         )
     }
 
@@ -394,6 +419,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateItem(item: TrackItem) {
         viewModelScope.launch { store.updateItem(item) }
+    }
+
+    fun setArchived(item: TrackItem, archived: Boolean) {
+        viewModelScope.launch { store.updateItem(item.copy(archived = archived)) }
     }
 
     fun deleteItem(item: TrackItem) {

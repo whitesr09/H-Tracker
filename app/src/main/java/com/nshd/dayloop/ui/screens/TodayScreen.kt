@@ -206,7 +206,8 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 viewModel.updateItem(it)
                 editTarget = null
             },
-            initial = target
+            initial = target,
+            onArchive = { viewModel.setArchived(it, true) }
         )
     }
 
@@ -620,6 +621,7 @@ private fun subText(item: TrackItem, completion: Completion?, weeklyDone: Int? =
         }
         ItemType.PLAN -> if (completion?.status == Completion.DONE) parts.add("Done") else parts.add("Tap when done")
     }
+    if (item.note.isNotBlank()) parts.add(item.note)
     return parts.joinToString(" · ").ifBlank { "Anytime" }
 }
 

@@ -44,7 +44,8 @@ fun AddItemSheet(
     onDismiss: () -> Unit,
     onAdd: (TrackItem) -> Unit,
     initial: TrackItem? = null,
-    defaultMode: RemindMode = RemindMode.NOTIFY
+    defaultMode: RemindMode = RemindMode.NOTIFY,
+    onArchive: (TrackItem) -> Unit = {}
 ) {
     var name by remember { mutableStateOf(initial?.name ?: "") }
     var type by remember { mutableStateOf(initial?.type ?: ItemType.HABIT) }
@@ -53,6 +54,7 @@ fun AddItemSheet(
     var target by remember { mutableStateOf(initial?.targetCount?.toString() ?: "8") }
     var unit by remember { mutableStateOf(initial?.unit ?: "") }
     var dose by remember { mutableStateOf(initial?.doseLabel ?: "") }
+    var note by remember { mutableStateOf(initial?.note ?: "") }
     var pills by remember { mutableStateOf(initial?.pillsLeft?.toString() ?: "") }
     var perDose by remember { mutableStateOf(initial?.pillsPerDose?.toString() ?: "1") }
     var mode by remember {
@@ -324,6 +326,16 @@ fun AddItemSheet(
                 }
             }
 
+            OutlinedTextField(
+                value = note,
+                onValueChange = { note = it },
+                label = { Text("Note (optional)") },
+                placeholder = { Text("e.g. after food, with warm water") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 1,
+                maxLines = 2
+            )
+
             Button(
                 onClick = {
                     if (name.isBlank()) return@Button
@@ -354,6 +366,8 @@ fun AddItemSheet(
                                 null
                             },
                             weekdays = selectedDays.toSet(),
+                            sortOrder = initial?.sortOrder ?: 0,
+                            note = note.trim(),
                             createdAt = initial?.createdAt ?: System.currentTimeMillis(),
                             archived = initial?.archived ?: false
                         )
@@ -369,6 +383,23 @@ fun AddItemSheet(
                     text = if (initial == null) "Add item" else "Save changes",
                     style = MaterialTheme.typography.titleMedium
                 )
+            }
+
+            if (initial != null) {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        onArchive(initial)
+                        onDismiss()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                ) {
+                    Text(
+                        "Archive item (hide it, keep its history)",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

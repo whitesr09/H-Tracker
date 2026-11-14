@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -179,6 +180,18 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
             Heatmap(state.heatmap)
         }
 
+        item {
+            Text(
+                text = state.monthLabel,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+        item {
+            MonthGrid(state)
+        }
+
         if (state.strengths.isNotEmpty()) {
             item {
                 Text(
@@ -267,6 +280,89 @@ private fun Heatmap(heatmap: List<Float>) {
                 }
             }
         }
+    }
+}
+
+/** Current month, Mon-first. Cell shade = that day's completion fraction. */
+@Composable
+private fun MonthGrid(state: com.nshd.dayloop.ui.TodayUiState) {
+    val todayDay = java.time.LocalDate.now().dayOfMonth
+    val cells = ArrayList<Float?>(state.monthOffset + state.monthFractions.size)
+    repeat(state.monthOffset) { cells.add(null) }
+    state.monthFractions.forEach { cells.add(it) }
+    while (cells.size % 7 != 0) cells.add(null)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            listOf("M", "T", "W", "T", "F", "S", "S").forEach { label ->
+                Box(modifier = Modifier.weight(1f), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+        // Indexed rows (blank = null cell).
+        val indexed = cells.withIndex().toList()
+        indexed.chunked(7).forEach { week ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                week.forEach { (idx, value) ->
+                    val dayNumber = idx - state.monthOffset + 1
+                    val isToday = value != null && dayNumber == todayDay
+                    val bg = when {
+                        value == null -> androidx.compose.ui.graphics.Color.Transparent
+                        value == -2f -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                        value < 0f -> MaterialTheme.colorScheme.surfaceVariant
+                        else -> AcidGreen.copy(alpha = 0.2f + 0.8f * value)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(9.dp))
+                            .background(bg)
+                            .then(
+                                if (isToday) {
+                                    Modifier.border(1.5.dp, AcidGreen, RoundedCornerShape(9.dp))
+                                } else {
+                                    Modifier
+                                }
+                            ),
+                        contentAlignment = androidx.compose.ui.Alignment.Center
+                    ) {
+                        if (value != null) {
+                            Text(
+                                text = "$dayNumber",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (value >= 0.99f) {
+                                    androidx.compose.ui.graphics.Color.Black
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        Text(
+            text = "Greener = more of that day completed. Future days are dimmed.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
