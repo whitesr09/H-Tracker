@@ -38,6 +38,8 @@ import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -77,6 +79,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
     val alarmPrefs by viewModel.alarmPrefs.collectAsState()
     var showSheet by remember { mutableStateOf(false) }
     var sortMode by remember { mutableStateOf(false) }
+    var hideDone by remember { mutableStateOf(false) }
     var runTarget by remember { mutableStateOf<TrackItem?>(null) }
     var editTarget by remember { mutableStateOf<TrackItem?>(null) }
     var deleteTarget by remember { mutableStateOf<TrackItem?>(null) }
@@ -106,7 +109,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                     IconButton(
                         onClick = { sortMode = !sortMode },
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                             .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
@@ -115,17 +118,17 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                             Icons.Filled.SwapVert,
                             contentDescription = "Reorder items",
                             tint = if (sortMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                     IconButton(
                         onClick = { showSheet = true },
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primary)
                     ) {
-                        Icon(Icons.Filled.Add, contentDescription = "Add item", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(26.dp))
+                        Icon(Icons.Filled.Add, contentDescription = "Add item", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(21.dp))
                     }
                 }
             }
@@ -138,6 +141,25 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
+            }
+        }
+
+        if (state.doneCount > 0 && !sortMode) {
+            item {
+                Row {
+                    FilterChip(
+                        selected = hideDone,
+                        onClick = { hideDone = !hideDone },
+                        label = { Text(if (hideDone) "Showing what's left" else "Hide completed") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            labelColor = MaterialTheme.colorScheme.onSurface,
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        border = null
+                    )
+                }
             }
         }
 
@@ -157,11 +179,17 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
             }
         } else {
             DayGroup.entries.forEach { group ->
-                val groupItems = state.dueItems.filter { it.group == group }
+                val groupItems = state.dueItems.filter { it.group == group }.filter { item ->
+                    if (!hideDone) return@filter true
+                    val c = state.todayCompletions[item.id]
+                    val done = c?.status == Completion.DONE || c?.status == Completion.TAKEN ||
+                        (item.kind == HabitKind.COUNT && (c?.value ?: 0) >= item.targetCount)
+                    !done
+                }
                 if (groupItems.isNotEmpty()) {
                     item(key = "head-${group.name}") {
                         Text(
-                            text = group.name,
+                            text = group.name.lowercase().replaceFirstChar { it.uppercase() },
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 6.dp)
@@ -186,6 +214,16 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                         )
                     }
                 }
+            }
+        }
+
+        if (hideDone && state.dueItems.isNotEmpty() && state.doneCount >= state.dueItems.size) {
+            item {
+                Text(
+                    text = "Everything is done. Turn the filter off to see the full list.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 
@@ -245,25 +283,25 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 TextButton(
                     onClick = { detailFor = target; optionsFor = null },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("📊  History & stats", color = MaterialTheme.colorScheme.onSurface) }
+                ) { Text("History & stats", color = MaterialTheme.colorScheme.onSurface) }
                 if (!isDone && comp?.status != Completion.SKIPPED) {
                     TextButton(
                         onClick = { viewModel.skipToday(target); optionsFor = null },
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("⏭  Skip today (rest day)", color = MaterialTheme.colorScheme.onSurface) }
+                    ) { Text("Skip today (rest day)", color = MaterialTheme.colorScheme.onSurface) }
                 }
                 TextButton(
                     onClick = { editTarget = target; optionsFor = null },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("✏️  Edit", color = MaterialTheme.colorScheme.onSurface) }
+                ) { Text("Edit", color = MaterialTheme.colorScheme.onSurface) }
                 TextButton(
                     onClick = { viewModel.setArchived(target, true); optionsFor = null },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("🗄  Archive", color = MaterialTheme.colorScheme.onSurface) }
+                ) { Text("Archive", color = MaterialTheme.colorScheme.onSurface) }
                 TextButton(
                     onClick = { deleteTarget = target; optionsFor = null },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("🗑  Delete", color = MaterialTheme.colorScheme.onSurface) }
+                ) { Text("Delete", color = MaterialTheme.colorScheme.onSurface) }
                 TextButton(
                     onClick = { optionsFor = null },
                     modifier = Modifier.fillMaxWidth()
@@ -357,10 +395,10 @@ private fun HeroRow(state: TodayUiState) {
                 )
                 Text(
                     text = when {
-                        state.dueItems.isEmpty() -> "Add your first item to close the loop."
-                        state.fraction >= 1f -> "Day complete 🎉 Loop closed!"
-                        state.fraction >= 0.5f -> "More than halfway — keep going."
-                        else -> "Keep going."
+                        state.dueItems.isEmpty() -> "Add your first item to close the loop"
+                        state.fraction >= 1f -> "Day complete — loop closed"
+                        state.fraction >= 0.5f -> "More than halfway there"
+                        else -> "${state.dueItems.size - state.doneCount} to go"
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (state.fraction >= 1f && state.dueItems.isNotEmpty()) {
@@ -380,13 +418,13 @@ private fun HeroRow(state: TodayUiState) {
         ) {
             MiniTile(
                 icon = Icons.Filled.Whatshot,
-                label = "STREAK",
+                label = "Streak",
                 value = "${state.streak} ${if (state.streak == 1) "day" else "days"}",
                 modifier = Modifier.weight(1f)
             )
             MiniTile(
                 icon = Icons.Filled.Medication,
-                label = "NEXT DOSE",
+                label = "Next dose",
                 value = state.nextDose?.let { dose ->
                     dose.timeMinutes?.let { "${dose.name} · ${formatTime(it)}" } ?: dose.name
                 } ?: "None",
@@ -405,10 +443,10 @@ private fun RefillTile(lowStock: List<TrackItem>) {
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(20.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
-        Text(text = "REFILL SOON", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+        Text(text = "Refill soon", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         Text(
             text = "${first.name} · ${first.pillsLeft} left" +
                 (if (lowStock.size > 1) " (+${lowStock.size - 1} more)" else ""),
@@ -435,7 +473,7 @@ private fun MiniTile(
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
     ) {
         Row(
@@ -510,7 +548,7 @@ private fun ItemRow(
                 onClick = { if (!sortMode) onToggle() },
                 onLongClick = if (sortMode) null else onLongPress
             )
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -720,7 +758,7 @@ private fun ItemDetailDialog(
                 )
             }
             Text(
-                text = "LAST 5 WEEKS",
+                text = "Last 5 weeks",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 6.dp)
@@ -818,7 +856,7 @@ private fun subText(item: TrackItem, completion: Completion?, weeklyDone: Int? =
             if (item.routineSteps.isNotEmpty()) {
                 parts.add("${item.routineSteps.size} steps · ${item.routineTotalMinutes()} min")
             } else if (completion?.status != Completion.DONE) {
-                parts.add("Tap ▶ to run")
+                parts.add("Ready to run")
             }
         }
         ItemType.PLAN -> if (completion?.status == Completion.DONE) parts.add("Done") else parts.add("Tap when done")

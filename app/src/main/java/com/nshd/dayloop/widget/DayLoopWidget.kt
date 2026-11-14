@@ -156,7 +156,7 @@ class DayLoopWidget : AppWidgetProvider() {
             .minByOrNull { it.timeMinutes ?: 9999 }
         views.setTextViewText(
             R.id.widget_nextitem,
-            nextUp?.let { "Next: ${it.name}" } ?: if (due.isEmpty()) "" else "All done 🎉"
+            nextUp?.let { "Next: ${it.name}" } ?: if (due.isEmpty()) "" else "All done"
         )
         if (nextUp != null) {
             views.setViewVisibility(R.id.widget_done_btn, android.view.View.VISIBLE)

@@ -106,24 +106,24 @@ fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.headlineLarge
             )
             Text(
-                text = "DayLoop v0.10.0",
+                text = "DayLoop v0.11.0",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Text(
-                text = "APPEARANCE",
+                text = "Appearance",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ModeChip("Dark 🌙", themeDark) { viewModel.setThemeDark(true) }
-                ModeChip("Light ☀️", !themeDark) { viewModel.setThemeDark(false) }
+                ModeChip("Dark", themeDark) { viewModel.setThemeDark(true) }
+                ModeChip("Light", !themeDark) { viewModel.setThemeDark(false) }
             }
 
             Text(
-                text = "REMINDERS",
+                text = "Reminders",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
@@ -140,7 +140,7 @@ fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
             )
 
             Text(
-                text = "ALARM",
+                text = "Alarm",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
@@ -153,7 +153,7 @@ fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 ModeChip("Notify", prefs.defaultMode == RemindMode.NOTIFY) {
                     viewModel.setDefaultRemindMode(RemindMode.NOTIFY)
                 }
-                ModeChip("Alarm ⏰", prefs.defaultMode == RemindMode.ALARM) {
+                ModeChip("Alarm", prefs.defaultMode == RemindMode.ALARM) {
                     viewModel.setDefaultRemindMode(RemindMode.ALARM)
                 }
                 ModeChip("Off", prefs.defaultMode == RemindMode.OFF) {
@@ -169,7 +169,7 @@ fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
             )
 
             Text(
-                text = "DATA",
+                text = "Data",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
@@ -203,7 +203,7 @@ fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
             val archivedItems = appState.allItems.filter { it.archived }
             if (archivedItems.isNotEmpty()) {
                 Text(
-                    text = "ARCHIVED",
+                    text = "Archived",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 24.dp, bottom = 4.dp)
@@ -277,7 +277,7 @@ private fun DeveloperFooter() {
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text(
-            text = "DEVELOPER",
+            text = "Developer",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center

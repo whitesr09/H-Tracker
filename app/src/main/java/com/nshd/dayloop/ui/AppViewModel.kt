@@ -46,7 +46,9 @@ data class TodayUiState(
     val monthLabel: String = "",
     val monthOffset: Int = 0,
     val monthFractions: List<Float> = emptyList(),
-    val completions: List<Completion> = emptyList()
+    val completions: List<Completion> = emptyList(),
+    /** Average completion per weekday (Mon..Sun) over the last 4 weeks; -1 = no data. */
+    val weekdayPattern: List<Float> = emptyList()
 )
 
 data class WeekReview(
@@ -327,7 +329,24 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
             },
-            completions = comps
+            completions = comps,
+            weekdayPattern = (1..7).map { dow ->
+                val fracs = (0..27).map { today.minusDays(it.toLong()) }
+                    .filter { it.dayOfWeek.value == dow }
+                    .mapNotNull { day ->
+                        val dayDue = items.filter {
+                            it.dueOn(day.dayOfWeek.value) && it.weeklyTarget == null
+                        }
+                        if (dayDue.isEmpty()) {
+                            null
+                        } else {
+                            val dayMap = compsByDay[day.toEpochDay()].orEmpty()
+                                .associateBy { it.itemId }
+                            dayDue.map { fractionOf(it, dayMap[it.id]) }.average().toFloat()
+                        }
+                    }
+                if (fracs.isEmpty()) -1f else fracs.average().toFloat()
+            }
         )
     }
 

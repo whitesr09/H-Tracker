@@ -88,7 +88,7 @@ fun RunModeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(text = "RUN MODE", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    Text(text = "Run mode", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     Text(text = item.name, style = MaterialTheme.typography.headlineMedium)
                 }
                 TextButton(onClick = onExit) { Text("Exit", color = MaterialTheme.colorScheme.onSurfaceVariant) }

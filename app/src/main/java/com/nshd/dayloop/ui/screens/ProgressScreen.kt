@@ -13,8 +13,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Medication
+import androidx.compose.material.icons.filled.Spa
+import androidx.compose.material.icons.filled.Whatshot
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -47,8 +56,8 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                StatTile(Modifier.weight(1f), "CHECK-INS", "${state.totalCheckins}")
-                StatTile(Modifier.weight(1f), "STREAK", "${state.streak} days")
+                StatTile(Modifier.weight(1f), "Check-ins", "${state.totalCheckins}")
+                StatTile(Modifier.weight(1f), "Streak", "${state.streak} days")
             }
         }
         item {
@@ -56,8 +65,8 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                StatTile(Modifier.weight(1f), "THIS WEEK", "${state.weekCheckins}")
-                StatTile(Modifier.weight(1f), "TODAY", "${state.doneCount}/${state.dueItems.size}")
+                StatTile(Modifier.weight(1f), "This week", "${state.weekCheckins}")
+                StatTile(Modifier.weight(1f), "Today", "${state.doneCount}/${state.dueItems.size}")
             }
         }
         item {
@@ -73,7 +82,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = "WEEK REVIEW",
+                    text = "Week review",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -96,7 +105,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
 
         item {
             Text(
-                text = "BADGES",
+                text = "Badges",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
@@ -104,12 +113,12 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
         }
         item {
             val badges = listOf(
-                Triple("🌱", "First steps", state.totalCheckins >= 1),
-                Triple("⚡", "3-day streak", state.streak >= 3),
-                Triple("🔥", "7-day streak", state.streak >= 7),
-                Triple("✅", "50 check-ins", state.totalCheckins >= 50),
-                Triple("💊", "Med master", (state.medAdherence30 ?: 0f) >= 0.9f),
-                Triple("🏆", "Perfect week", state.weekReview.thisWeekPct >= 100)
+                Triple(Icons.Filled.Spa, "First steps", state.totalCheckins >= 1),
+                Triple(Icons.Filled.Bolt, "3-day streak", state.streak >= 3),
+                Triple(Icons.Filled.Whatshot, "7-day streak", state.streak >= 7),
+                Triple(Icons.Filled.CheckCircle, "50 check-ins", state.totalCheckins >= 50),
+                Triple(Icons.Filled.Medication, "Med master", (state.medAdherence30 ?: 0f) >= 0.9f),
+                Triple(Icons.Filled.EmojiEvents, "Perfect week", state.weekReview.thisWeekPct >= 100)
             )
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 badges.chunked(3).forEach { row ->
@@ -136,11 +145,12 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                                 horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Text(
-                                    text = emoji,
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    color = if (earned) {
-                                        MaterialTheme.colorScheme.onSurface
+                                Icon(
+                                    imageVector = emoji,
+                                    contentDescription = label,
+                                    modifier = Modifier.size(28.dp),
+                                    tint = if (earned) {
+                                        MaterialTheme.colorScheme.primary
                                     } else {
                                         MaterialTheme.colorScheme.onSurfaceVariant
                                     }
@@ -181,10 +191,10 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
             ) {
                 StatTile(
                     Modifier.weight(1f),
-                    "MED ADHERENCE · 30D",
+                    "Med adherence · 30 days",
                     state.medAdherence30?.let { "${(it * 100).toInt()}%" } ?: "—"
                 )
-                StatTile(Modifier.weight(1f), "REFILL SOON", "${state.lowStock.size}")
+                StatTile(Modifier.weight(1f), "Refill soon", "${state.lowStock.size}")
             }
         }
 
@@ -192,7 +202,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
         if (weeklyItems.isNotEmpty()) {
             item {
                 Text(
-                    text = "WEEKLY TARGETS",
+                    text = "Weekly targets",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
@@ -231,7 +241,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
         if (state.lowStock.isNotEmpty()) {
             item {
                 Text(
-                    text = "LOW STOCK",
+                    text = "Low stock",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
@@ -249,7 +259,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
 
         item {
             Text(
-                text = "LAST 15 WEEKS",
+                text = "Last 15 weeks",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp)
@@ -271,10 +281,24 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
             MonthGrid(state)
         }
 
+        if (state.weekdayPattern.size >= 7) {
+            item {
+                Text(
+                    text = "Your week pattern",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+            item {
+                WeekdayChart(state)
+            }
+        }
+
         if (state.strengths.isNotEmpty()) {
             item {
                 Text(
-                    text = "HABIT STRENGTH · 28 DAYS",
+                    text = "Habit strength · 28 days",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)
@@ -442,6 +466,79 @@ private fun MonthGrid(state: com.nshd.dayloop.ui.TodayUiState) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+/** Average completion per weekday over the last 4 weeks, Mon-first bars. */
+@Composable
+private fun WeekdayChart(state: com.nshd.dayloop.ui.TodayUiState) {
+    val pattern = state.weekdayPattern
+    val dayLetters = listOf("M", "T", "W", "T", "F", "S", "S")
+    val dayNames = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+    val best = pattern.indices.filter { pattern[it] >= 0f }
+        .maxByOrNull { pattern[it] }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = androidx.compose.ui.Alignment.Bottom
+        ) {
+            pattern.forEachIndexed { index, value ->
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = if (value < 0f) "—" else "${(value * 100).toInt()}%",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(22.dp)
+                            .height(if (value < 0f) 6.dp else (10 + 54 * value).dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(
+                                if (value < 0f) {
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                } else {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.35f + 0.65f * value)
+                                }
+                            )
+                    )
+                    Text(
+                        text = dayLetters[index],
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (index == best) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                }
+            }
+        }
+        if (best != null) {
+            Text(
+                text = "Strongest day: ${dayNames[best]}. Based on the last 4 weeks.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            Text(
+                text = "Not enough history yet — check back after a few days of check-ins.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

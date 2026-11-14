@@ -100,6 +100,59 @@ fun AddItemSheet(
                 style = MaterialTheme.typography.titleLarge
             )
 
+            if (initial == null) {
+                Text(
+                    text = "Quick start",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TypeChip("Water", false) {
+                        name = "Drink water"
+                        type = ItemType.HABIT
+                        kind = HabitKind.COUNT
+                        target = "8"
+                        unit = "glasses"
+                        group = DayGroup.ANYTIME
+                    }
+                    TypeChip("Workout", false) {
+                        name = "Workout"
+                        type = ItemType.HABIT
+                        kind = HabitKind.YESNO
+                        group = DayGroup.MORNING
+                    }
+                    TypeChip("Medicine", false) {
+                        name = "Medicine"
+                        type = ItemType.MEDICATION
+                        dose = "1 tab"
+                        group = DayGroup.MORNING
+                    }
+                    TypeChip("Study", false) {
+                        name = "Study"
+                        type = ItemType.HABIT
+                        kind = HabitKind.YESNO
+                        group = DayGroup.EVENING
+                    }
+                    TypeChip("Prayer", false) {
+                        name = "Prayer"
+                        type = ItemType.HABIT
+                        kind = HabitKind.YESNO
+                        group = DayGroup.MORNING
+                    }
+                    TypeChip("Sleep early", false) {
+                        name = "Sleep early"
+                        type = ItemType.HABIT
+                        kind = HabitKind.YESNO
+                        group = DayGroup.EVENING
+                    }
+                }
+            }
+
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -109,7 +162,7 @@ fun AddItemSheet(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Text(text = "TYPE", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = "Type", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TypeChip("Habit", type == ItemType.HABIT) { type = ItemType.HABIT }
                 TypeChip("Medication", type == ItemType.MEDICATION) { type = ItemType.MEDICATION }
@@ -117,7 +170,7 @@ fun AddItemSheet(
                 TypeChip("Plan", type == ItemType.PLAN) { type = ItemType.PLAN }
             }
 
-            Text(text = "WHEN", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = "When", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TypeChip("Morning", group == DayGroup.MORNING) { group = DayGroup.MORNING }
                 TypeChip("Afternoon", group == DayGroup.AFTERNOON) { group = DayGroup.AFTERNOON }
@@ -125,7 +178,7 @@ fun AddItemSheet(
                 TypeChip("Anytime", group == DayGroup.ANYTIME) { group = DayGroup.ANYTIME }
             }
 
-            Text(text = "REPEAT DAYS", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = "Repeat days", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
                 (1..7).forEach { day ->
@@ -277,14 +330,14 @@ fun AddItemSheet(
 
             if (hasTime) {
                 Text(
-                    text = "REMINDER",
+                    text = "Reminder",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TypeChip("Off", mode == RemindMode.OFF) { mode = RemindMode.OFF }
                     TypeChip("Notify", mode == RemindMode.NOTIFY) { mode = RemindMode.NOTIFY }
-                    TypeChip("Alarm ⏰", mode == RemindMode.ALARM) { mode = RemindMode.ALARM }
+                    TypeChip("Alarm", mode == RemindMode.ALARM) { mode = RemindMode.ALARM }
                 }
                 if (mode == RemindMode.ALARM) {
                     Text(

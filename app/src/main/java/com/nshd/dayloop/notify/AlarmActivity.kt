@@ -111,7 +111,7 @@ private fun AlarmScreen(
             )
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "IT'S TIME",
+                text = "It's time",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary
             )
