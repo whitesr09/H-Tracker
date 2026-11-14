@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import com.nshd.dayloop.R
 import com.nshd.dayloop.data.RemindMode
 import com.nshd.dayloop.ui.AppViewModel
-import com.nshd.dayloop.ui.theme.AcidGreen
 
 @Composable
 fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
@@ -90,25 +89,24 @@ fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
         }
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
             Text(
                 text = "DAYLOOP",
                 style = MaterialTheme.typography.labelLarge,
-                color = AcidGreen
+                color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = "Settings",
                 style = MaterialTheme.typography.headlineLarge
             )
             Text(
-                text = "DayLoop v0.9.0",
+                text = "DayLoop v0.10.0",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -198,7 +196,7 @@ fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 Text(
                     text = it,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AcidGreen
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -226,7 +224,6 @@ fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                     }
                 }
             }
-        }
 
         DeveloperFooter()
     }
@@ -244,8 +241,8 @@ private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Un
             checked = checked,
             onCheckedChange = onChange,
             colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.Black,
-                checkedTrackColor = AcidGreen,
+                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                checkedTrackColor = MaterialTheme.colorScheme.primary,
                 uncheckedThumbColor = MaterialTheme.colorScheme.onSurface,
                 uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
             )
@@ -262,37 +259,38 @@ private fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit) {
         colors = FilterChipDefaults.filterChipColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             labelColor = MaterialTheme.colorScheme.onSurface,
-            selectedContainerColor = AcidGreen,
-            selectedLabelColor = Color.Black
+            selectedContainerColor = MaterialTheme.colorScheme.primary,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
         ),
         border = null
     )
 }
 
-/** Compact, centered developer block, pinned to the bottom of Settings. */
+/** Small, centered developer block at the end of the scrolling Settings. */
 @Composable
 private fun DeveloperFooter() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(top = 28.dp, bottom = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text(
             text = "DEVELOPER",
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         Text(
             text = "Built by N S H D",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleSmall,
             textAlign = TextAlign.Center
         )
         Row(
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(top = 4.dp)
         ) {
             SocialIcon(
                 iconRes = R.drawable.ic_social_instagram,
@@ -323,7 +321,7 @@ private fun SocialIcon(iconRes: Int, label: String, url: String) {
     val uriHandler = LocalUriHandler.current
     Box(
         modifier = Modifier
-            .size(48.dp)
+            .size(38.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
@@ -333,7 +331,7 @@ private fun SocialIcon(iconRes: Int, label: String, url: String) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = label,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(19.dp),
             tint = Color.Unspecified
         )
     }

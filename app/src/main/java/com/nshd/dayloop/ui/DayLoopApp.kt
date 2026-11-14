@@ -35,7 +35,6 @@ import androidx.core.content.ContextCompat
 import com.nshd.dayloop.ui.screens.ProgressScreen
 import com.nshd.dayloop.ui.screens.SettingsScreen
 import com.nshd.dayloop.ui.screens.TodayScreen
-import com.nshd.dayloop.ui.theme.AcidGreen
 
 private enum class Tab(val label: String, val icon: ImageVector) {
     Today("Today", Icons.Filled.Home),
@@ -71,8 +70,8 @@ fun DayLoopApp(viewModel: AppViewModel) {
                         icon = { Icon(item.icon, contentDescription = item.label) },
                         label = { Text(item.label) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = AcidGreen,
-                            selectedTextColor = AcidGreen,
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
                             unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             indicatorColor = MaterialTheme.colorScheme.surface

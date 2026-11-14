@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.nshd.dayloop.data.TrackItem
-import com.nshd.dayloop.ui.theme.AcidGreen
 import kotlinx.coroutines.delay
 
 /**
@@ -89,7 +88,7 @@ fun RunModeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(text = "RUN MODE", style = MaterialTheme.typography.labelLarge, color = AcidGreen)
+                    Text(text = "RUN MODE", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     Text(text = item.name, style = MaterialTheme.typography.headlineMedium)
                 }
                 TextButton(onClick = onExit) { Text("Exit", color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -114,7 +113,7 @@ fun RunModeScreen(
                 }
                 Button(
                     onClick = onFinish,
-                    colors = ButtonDefaults.buttonColors(containerColor = AcidGreen, contentColor = Color.Black),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("Mark done for today", style = MaterialTheme.typography.titleMedium) }
             } else {
@@ -144,7 +143,7 @@ fun RunModeScreen(
                     Text(
                         text = formatClock(secondsLeft),
                         style = MaterialTheme.typography.displayMedium,
-                        color = AcidGreen
+                        color = MaterialTheme.colorScheme.primary
                     )
                     LinearProgressIndicator(
                         progress = { progress },
@@ -152,7 +151,7 @@ fun RunModeScreen(
                             .fillMaxWidth()
                             .height(8.dp)
                             .clip(RoundedCornerShape(8.dp)),
-                        color = AcidGreen,
+                        color = MaterialTheme.colorScheme.primary,
                         trackColor = MaterialTheme.colorScheme.outline
                     )
                 }
@@ -166,7 +165,7 @@ fun RunModeScreen(
                             text = "${index + 1}. ${s.name}",
                             style = MaterialTheme.typography.bodyLarge,
                             color = when {
-                                index < stepIndex -> AcidGreen
+                                index < stepIndex -> MaterialTheme.colorScheme.primary
                                 index == stepIndex -> MaterialTheme.colorScheme.onSurface
                                 else -> MaterialTheme.colorScheme.onSurfaceVariant
                             }
@@ -180,7 +179,7 @@ fun RunModeScreen(
                 if (!started) {
                     Button(
                         onClick = { started = true; running = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = AcidGreen, contentColor = Color.Black),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                         modifier = Modifier.fillMaxWidth()
                     ) { Text("Start routine", style = MaterialTheme.typography.titleMedium) }
                 } else {
@@ -190,7 +189,7 @@ fun RunModeScreen(
                     ) {
                         Button(
                             onClick = { running = !running },
-                            colors = ButtonDefaults.buttonColors(containerColor = AcidGreen, contentColor = Color.Black),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                             modifier = Modifier.weight(1f)
                         ) { Text(if (running) "Pause" else "Resume") }
                         TextButton(
@@ -203,7 +202,7 @@ fun RunModeScreen(
                                 }
                             },
                             modifier = Modifier.weight(1f)
-                        ) { Text("Next step", color = AcidGreen) }
+                        ) { Text("Next step", color = MaterialTheme.colorScheme.primary) }
                     }
                     TextButton(
                         onClick = { running = false; onFinish() },

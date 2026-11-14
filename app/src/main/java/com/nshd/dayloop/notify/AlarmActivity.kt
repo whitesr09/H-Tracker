@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nshd.dayloop.data.DayLoopStore
-import com.nshd.dayloop.ui.theme.AcidGreen
 import com.nshd.dayloop.ui.theme.DayLoopTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -107,14 +106,14 @@ private fun AlarmScreen(
             Icon(
                 imageVector = Icons.Filled.Alarm,
                 contentDescription = null,
-                tint = AcidGreen,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(72.dp)
             )
             Spacer(Modifier.height(16.dp))
             Text(
                 text = "IT'S TIME",
                 style = MaterialTheme.typography.labelLarge,
-                color = AcidGreen
+                color = MaterialTheme.colorScheme.primary
             )
             Spacer(Modifier.height(8.dp))
             Text(
@@ -143,8 +142,8 @@ private fun AlarmScreen(
             Button(
                 onClick = onDone,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AcidGreen,
-                    contentColor = Color.Black
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 modifier = Modifier
                     .fillMaxWidth()

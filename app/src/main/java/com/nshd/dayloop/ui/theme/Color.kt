@@ -3,6 +3,9 @@ package com.nshd.dayloop.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val AcidGreen = Color(0xFFA6FF00)
+
+/** Light-mode accent: deep leaf green — readable on the paper background. */
+val LeafGreen = Color(0xFF4D7C0F)
 val InkBlack = Color(0xFF0A0A0A)
 val TileDark = Color(0xFF161616)
 val TileRaised = Color(0xFF1E1E1E)

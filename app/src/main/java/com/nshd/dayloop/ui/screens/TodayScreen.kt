@@ -66,7 +66,6 @@ import com.nshd.dayloop.data.ItemType
 import com.nshd.dayloop.data.TrackItem
 import com.nshd.dayloop.ui.AppViewModel
 import com.nshd.dayloop.ui.TodayUiState
-import com.nshd.dayloop.ui.theme.AcidGreen
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -99,7 +98,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(text = "DAYLOOP", style = MaterialTheme.typography.labelLarge, color = AcidGreen)
+                    Text(text = "DAYLOOP", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     Text(text = "Today", style = MaterialTheme.typography.headlineLarge)
                     Text(text = todayLabel, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -115,7 +114,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                         Icon(
                             Icons.Filled.SwapVert,
                             contentDescription = "Reorder items",
-                            tint = if (sortMode) AcidGreen else MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = if (sortMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -124,9 +123,9 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(AcidGreen)
+                            .background(MaterialTheme.colorScheme.primary)
                     ) {
-                        Icon(Icons.Filled.Add, contentDescription = "Add item", tint = Color.Black, modifier = Modifier.size(26.dp))
+                        Icon(Icons.Filled.Add, contentDescription = "Add item", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(26.dp))
                     }
                 }
             }
@@ -137,7 +136,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 Text(
                     text = "Reorder mode — move items with ↑ ↓ inside each section, then tap ⇅ again to finish.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AcidGreen
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -291,7 +290,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 TextButton(onClick = {
                     viewModel.deleteItem(target)
                     deleteTarget = null
-                }) { Text("Remove", color = AcidGreen) }
+                }) { Text("Remove", color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
                 TextButton(onClick = { deleteTarget = null }) { Text("Keep", color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -325,6 +324,7 @@ private fun HeroRow(state: TodayUiState) {
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             val ringTrack = MaterialTheme.colorScheme.surfaceVariant
+            val ringProgress = MaterialTheme.colorScheme.primary
             Box(contentAlignment = Alignment.Center) {
                 Canvas(modifier = Modifier.size(86.dp)) {
                     drawArc(
@@ -335,7 +335,7 @@ private fun HeroRow(state: TodayUiState) {
                         style = Stroke(width = 9.dp.toPx(), cap = StrokeCap.Round)
                     )
                     drawArc(
-                        color = AcidGreen,
+                        color = ringProgress,
                         startAngle = -90f,
                         sweepAngle = 360f * animated,
                         useCenter = false,
@@ -353,12 +353,21 @@ private fun HeroRow(state: TodayUiState) {
                 Text(
                     text = "${state.doneCount} of ${state.dueItems.size} done",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = AcidGreen
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = if (state.dueItems.isEmpty()) "Add your first item to close the loop." else "Keep going.",
+                    text = when {
+                        state.dueItems.isEmpty() -> "Add your first item to close the loop."
+                        state.fraction >= 1f -> "Day complete 🎉 Loop closed!"
+                        state.fraction >= 0.5f -> "More than halfway — keep going."
+                        else -> "Keep going."
+                    },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (state.fraction >= 1f && state.dueItems.isNotEmpty()) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
                 )
             }
         }
@@ -395,11 +404,11 @@ private fun RefillTile(lowStock: List<TrackItem>) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, AcidGreen, RoundedCornerShape(20.dp))
+            .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(20.dp))
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
-        Text(text = "REFILL SOON", style = MaterialTheme.typography.labelLarge, color = AcidGreen)
+        Text(text = "REFILL SOON", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         Text(
             text = "${first.name} · ${first.pillsLeft} left" +
                 (if (lowStock.size > 1) " (+${lowStock.size - 1} more)" else ""),
@@ -433,7 +442,7 @@ private fun MiniTile(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Icon(icon, contentDescription = label, tint = AcidGreen, modifier = Modifier.size(16.dp))
+            Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
             Text(text = label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text(text = value, style = MaterialTheme.typography.titleMedium, maxLines = 2)
@@ -481,7 +490,7 @@ private fun ItemRow(
     val done = completion?.status == Completion.DONE || completion?.status == Completion.TAKEN
     val skipped = completion?.status == Completion.SKIPPED
     val circleColor by animateColorAsState(
-        targetValue = if (done) AcidGreen else Color.Transparent,
+        targetValue = if (done) MaterialTheme.colorScheme.primary else Color.Transparent,
         animationSpec = tween(300),
         label = "circle"
     )
@@ -511,11 +520,11 @@ private fun ItemRow(
                 .graphicsLayer { scaleX = scale; scaleY = scale }
                 .clip(CircleShape)
                 .background(circleColor)
-                .border(2.dp, if (done) AcidGreen else MaterialTheme.colorScheme.outline, CircleShape),
+                .border(2.dp, if (done) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             if (done) {
-                Icon(Icons.Filled.Check, contentDescription = "Done", tint = Color.Black, modifier = Modifier.size(20.dp))
+                Icon(Icons.Filled.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp))
             } else if (skipped) {
                 Icon(Icons.Filled.Close, contentDescription = "Skipped", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
             } else {
@@ -535,7 +544,7 @@ private fun ItemRow(
             Text(
                 text = subText(item, completion, weeklyDone),
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (done) AcidGreen else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (done) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
@@ -545,7 +554,7 @@ private fun ItemRow(
                     Icon(
                         Icons.Filled.KeyboardArrowUp,
                         contentDescription = "Move ${item.name} up",
-                        tint = AcidGreen,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -553,7 +562,7 @@ private fun ItemRow(
                     Icon(
                         Icons.Filled.KeyboardArrowDown,
                         contentDescription = "Move ${item.name} down",
-                        tint = AcidGreen,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -567,7 +576,7 @@ private fun ItemRow(
                 Icon(
                     Icons.Filled.PlayCircle,
                     contentDescription = "Run ${item.name}",
-                    tint = AcidGreen,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -607,7 +616,7 @@ private fun ItemRow(
                 ) {
                     Text(
                         if (completion?.status == Completion.LATER) "Snoozed" else "Later",
-                        color = AcidGreen
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
                 TextButton(
@@ -634,7 +643,7 @@ private fun StepperButton(label: String, onClick: () -> Unit) {
             .combinedClickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = label, style = MaterialTheme.typography.titleMedium, color = AcidGreen)
+        Text(text = label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -734,8 +743,8 @@ private fun ItemDetailDialog(
                         val bg = when {
                             skippedDay -> MaterialTheme.colorScheme.surfaceVariant
                             !due -> Color.Transparent
-                            frac >= 1f -> AcidGreen
-                            frac > 0f -> AcidGreen.copy(alpha = 0.3f + 0.7f * frac)
+                            frac >= 1f -> MaterialTheme.colorScheme.primary
+                            frac > 0f -> MaterialTheme.colorScheme.primary.copy(alpha = 0.3f + 0.7f * frac)
                             else -> MaterialTheme.colorScheme.surfaceVariant
                         }
                         Box(
@@ -773,7 +782,7 @@ private fun ItemDetailDialog(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-                Text("Close", color = AcidGreen)
+                Text("Close", color = MaterialTheme.colorScheme.primary)
             }
         }
     }

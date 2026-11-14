@@ -19,8 +19,8 @@ private val DayLoopDarkColors = darkColorScheme(
 )
 
 private val DayLoopLightColors = lightColorScheme(
-    primary = AcidGreen,
-    onPrimary = Color.Black,
+    primary = LeafGreen,
+    onPrimary = Color.White,
     background = PaperBg,
     onBackground = InkText,
     surface = PaperTile,

@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.nshd.dayloop.ui.AppViewModel
-import com.nshd.dayloop.ui.theme.AcidGreen
 
 @Composable
 fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
@@ -39,7 +38,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
     ) {
         item {
             Spacer(Modifier.height(8.dp))
-            Text(text = "DAYLOOP", style = MaterialTheme.typography.labelLarge, color = AcidGreen)
+            Text(text = "DAYLOOP", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             Text(text = "Progress", style = MaterialTheme.typography.headlineLarge)
         }
 
@@ -90,8 +89,88 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                     text = "Last week: ${review.lastWeekCheckins} check-ins" +
                         if (diff > 0) " · ▲ $diff vs last week" else if (diff < 0) " · ▼ ${-diff} vs last week" else " · same as last week",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = if (diff >= 0) AcidGreen else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (diff >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+
+        item {
+            Text(
+                text = "BADGES",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+        item {
+            val badges = listOf(
+                Triple("🌱", "First steps", state.totalCheckins >= 1),
+                Triple("⚡", "3-day streak", state.streak >= 3),
+                Triple("🔥", "7-day streak", state.streak >= 7),
+                Triple("✅", "50 check-ins", state.totalCheckins >= 50),
+                Triple("💊", "Med master", (state.medAdherence30 ?: 0f) >= 0.9f),
+                Triple("🏆", "Perfect week", state.weekReview.thisWeekPct >= 100)
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                badges.chunked(3).forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        row.forEach { (emoji, label, earned) ->
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .border(
+                                        1.dp,
+                                        if (earned) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.outline
+                                        },
+                                        RoundedCornerShape(16.dp)
+                                    )
+                                    .padding(vertical = 12.dp, horizontal = 6.dp),
+                                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = emoji,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = if (earned) {
+                                        MaterialTheme.colorScheme.onSurface
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
+                                )
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (earned) {
+                                        MaterialTheme.colorScheme.onSurface
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                                Text(
+                                    text = if (earned) "Earned ✓" else "Locked",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (earned) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
+                                )
+                            }
+                        }
+                        repeat(3 - row.size) {
+                            Box(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
             }
         }
 
@@ -132,7 +211,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                             Text(
                                 text = if (done >= target) "Goal met ✓ $done/$target" else "$done/$target this week",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = AcidGreen
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                         LinearProgressIndicator(
@@ -141,7 +220,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                                 .fillMaxWidth()
                                 .height(7.dp)
                                 .clip(RoundedCornerShape(7.dp)),
-                            color = AcidGreen,
+                            color = MaterialTheme.colorScheme.primary,
                             trackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                     }
@@ -212,7 +291,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                             Text(
                                 text = "${(strength.percent * 100).toInt()}%",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = AcidGreen
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                         LinearProgressIndicator(
@@ -221,7 +300,7 @@ fun ProgressScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                                 .fillMaxWidth()
                                 .height(7.dp)
                                 .clip(RoundedCornerShape(7.dp)),
-                            color = AcidGreen,
+                            color = MaterialTheme.colorScheme.primary,
                             trackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                     }
@@ -269,7 +348,7 @@ private fun Heatmap(heatmap: List<Float>) {
                     val cellColor = when {
                         value < 0f -> MaterialTheme.colorScheme.surface
                         value <= 0f -> MaterialTheme.colorScheme.surfaceVariant
-                        else -> AcidGreen.copy(alpha = 0.25f + 0.75f * value)
+                        else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.25f + 0.75f * value)
                     }
                     Box(
                         modifier = Modifier
@@ -326,7 +405,7 @@ private fun MonthGrid(state: com.nshd.dayloop.ui.TodayUiState) {
                         value == null -> androidx.compose.ui.graphics.Color.Transparent
                         value == -2f -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
                         value < 0f -> MaterialTheme.colorScheme.surfaceVariant
-                        else -> AcidGreen.copy(alpha = 0.2f + 0.8f * value)
+                        else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f + 0.8f * value)
                     }
                     Box(
                         modifier = Modifier
@@ -336,7 +415,7 @@ private fun MonthGrid(state: com.nshd.dayloop.ui.TodayUiState) {
                             .background(bg)
                             .then(
                                 if (isToday) {
-                                    Modifier.border(1.5.dp, AcidGreen, RoundedCornerShape(9.dp))
+                                    Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(9.dp))
                                 } else {
                                     Modifier
                                 }
@@ -348,7 +427,7 @@ private fun MonthGrid(state: com.nshd.dayloop.ui.TodayUiState) {
                                 text = "$dayNumber",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (value >= 0.99f) {
-                                    androidx.compose.ui.graphics.Color.Black
+                                    MaterialTheme.colorScheme.onPrimary
                                 } else {
                                     MaterialTheme.colorScheme.onSurface
                                 }

@@ -36,7 +36,6 @@ import com.nshd.dayloop.data.ItemType
 import com.nshd.dayloop.data.RemindMode
 import com.nshd.dayloop.data.TrackItem
 import com.nshd.dayloop.ui.AppViewModel
-import com.nshd.dayloop.ui.theme.AcidGreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -159,8 +158,8 @@ fun AddItemSheet(
                     checked = hasTime,
                     onCheckedChange = { hasTime = it },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.Black,
-                        checkedTrackColor = AcidGreen,
+                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                        checkedTrackColor = MaterialTheme.colorScheme.primary,
                         uncheckedThumbColor = MaterialTheme.colorScheme.onSurface,
                         uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
@@ -273,7 +272,7 @@ fun AddItemSheet(
                             stepName = ""
                         }
                     }
-                ) { Text("+ Add step", color = AcidGreen) }
+                ) { Text("+ Add step", color = MaterialTheme.colorScheme.primary) }
             }
 
             if (hasTime) {
@@ -374,7 +373,7 @@ fun AddItemSheet(
                     )
                     onDismiss()
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = AcidGreen, contentColor = Color.Black),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 20.dp)
@@ -414,8 +413,8 @@ private fun TypeChip(label: String, selected: Boolean, onClick: () -> Unit) {
         colors = FilterChipDefaults.filterChipColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             labelColor = MaterialTheme.colorScheme.onSurface,
-            selectedContainerColor = AcidGreen,
-            selectedLabelColor = Color.Black
+            selectedContainerColor = MaterialTheme.colorScheme.primary,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
         ),
         border = null
     )
