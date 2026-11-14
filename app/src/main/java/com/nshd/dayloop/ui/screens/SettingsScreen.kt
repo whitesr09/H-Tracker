@@ -108,7 +108,7 @@ fun SettingsScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.headlineLarge
             )
             Text(
-                text = "DayLoop v0.8.0",
+                text = "DayLoop v0.9.0",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

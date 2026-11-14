@@ -45,7 +45,8 @@ data class TodayUiState(
     val weekReview: WeekReview = WeekReview(),
     val monthLabel: String = "",
     val monthOffset: Int = 0,
-    val monthFractions: List<Float> = emptyList()
+    val monthFractions: List<Float> = emptyList(),
+    val completions: List<Completion> = emptyList()
 )
 
 data class WeekReview(
@@ -177,8 +178,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }
             val dayMap = comps.filter { it.epochDay == day.toEpochDay() }.associateBy { it.itemId }
             val complete = dayDue.all { fractionOf(it, dayMap[it.id]) >= 1f }
+            // Rest day: everything due was resolved and at least one item was
+            // consciously skipped — the streak survives but does not grow.
+            val excused = dayDue.all {
+                val c = dayMap[it.id]
+                c != null && c.status != Completion.LATER
+            } && dayDue.any { dayMap[it.id]?.status == Completion.SKIPPED }
             if (complete) {
                 streak++
+                offset++
+            } else if (excused) {
                 offset++
             } else {
                 if (offset == 0) offset++ else break
@@ -317,8 +326,17 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
                 }
-            }
+            },
+            completions = comps
         )
+    }
+
+    /** Conscious skip for today (rest day) — available for every item type. */
+    fun skipToday(item: TrackItem) {
+        val today = LocalDate.now().toEpochDay()
+        viewModelScope.launch {
+            store.setCompletion(Completion(item.id, today, Completion.SKIPPED, 0))
+        }
     }
 
     /** Mark an item done for today without toggling (Run mode finish). */

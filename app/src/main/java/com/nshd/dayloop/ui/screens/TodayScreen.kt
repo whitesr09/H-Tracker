@@ -81,6 +81,8 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
     var runTarget by remember { mutableStateOf<TrackItem?>(null) }
     var editTarget by remember { mutableStateOf<TrackItem?>(null) }
     var deleteTarget by remember { mutableStateOf<TrackItem?>(null) }
+    var optionsFor by remember { mutableStateOf<TrackItem?>(null) }
+    var detailFor by remember { mutableStateOf<TrackItem?>(null) }
     val todayLabel = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM"))
 
     LazyColumn(
@@ -180,7 +182,7 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                             sortMode = sortMode,
                             onMoveUp = { viewModel.move(item, -1) },
                             onMoveDown = { viewModel.move(item, 1) },
-                            onLongPress = { deleteTarget = item },
+                            onLongPress = { optionsFor = item },
                             modifier = Modifier.animateItem()
                         )
                     }
@@ -219,6 +221,63 @@ fun TodayScreen(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 runTarget = null
             },
             onExit = { runTarget = null }
+        )
+    }
+
+    optionsFor?.let { target ->
+        val comp = state.todayCompletions[target.id]
+        val isDone = comp?.status == Completion.DONE || comp?.status == Completion.TAKEN
+        androidx.compose.ui.window.Dialog(onDismissRequest = { optionsFor = null }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp))
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(text = target.name, style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = "Quick actions",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                TextButton(
+                    onClick = { detailFor = target; optionsFor = null },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("📊  History & stats", color = MaterialTheme.colorScheme.onSurface) }
+                if (!isDone && comp?.status != Completion.SKIPPED) {
+                    TextButton(
+                        onClick = { viewModel.skipToday(target); optionsFor = null },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("⏭  Skip today (rest day)", color = MaterialTheme.colorScheme.onSurface) }
+                }
+                TextButton(
+                    onClick = { editTarget = target; optionsFor = null },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("✏️  Edit", color = MaterialTheme.colorScheme.onSurface) }
+                TextButton(
+                    onClick = { viewModel.setArchived(target, true); optionsFor = null },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("🗄  Archive", color = MaterialTheme.colorScheme.onSurface) }
+                TextButton(
+                    onClick = { deleteTarget = target; optionsFor = null },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("🗑  Delete", color = MaterialTheme.colorScheme.onSurface) }
+                TextButton(
+                    onClick = { optionsFor = null },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
+        }
+    }
+
+    detailFor?.let { target ->
+        ItemDetailDialog(
+            item = target,
+            completions = state.completions,
+            onDismiss = { detailFor = null }
         )
     }
 
@@ -584,6 +643,140 @@ private fun typeIcon(type: ItemType): ImageVector = when (type) {
     ItemType.MEDICATION -> Icons.Filled.Medication
     ItemType.ROUTINE -> Icons.Filled.PlayCircle
     ItemType.PLAN -> Icons.Filled.EventNote
+}
+
+@Composable
+private fun ItemDetailDialog(
+    item: TrackItem,
+    completions: List<Completion>,
+    onDismiss: () -> Unit
+) {
+    val today = LocalDate.now()
+    val mine = completions.filter { it.itemId == item.id }
+    val byDay = mine.associateBy { it.epochDay }
+    val totalDone = mine.count {
+        it.status == Completion.DONE || it.status == Completion.TAKEN
+    }
+    var itemStreak = 0
+    var offset = 0
+    var started = false
+    while (offset < 365) {
+        val day = today.minusDays(offset.toLong())
+        offset++
+        if (!item.dueOn(day.dayOfWeek.value)) continue
+        val c = byDay[day.toEpochDay()]
+        val done = c?.status == Completion.DONE || c?.status == Completion.TAKEN ||
+            (item.kind == HabitKind.COUNT && c != null && c.value >= item.targetCount)
+        if (done) {
+            itemStreak++
+            started = true
+            continue
+        }
+        if (c?.status == Completion.SKIPPED) continue
+        if (day == today && !started) continue
+        break
+    }
+    val lastDoneDay = mine
+        .filter { it.status == Completion.DONE || it.status == Completion.TAKEN }
+        .maxOfOrNull { it.epochDay }
+
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp))
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(text = item.name, style = MaterialTheme.typography.titleLarge)
+            if (item.note.isNotBlank()) {
+                Text(
+                    text = item.note,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                text = "Current streak: $itemStreak days · Total check-ins: $totalDone",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            lastDoneDay?.let {
+                Text(
+                    text = "Last done: " + LocalDate.ofEpochDay(it)
+                        .format(DateTimeFormatter.ofPattern("d MMM yyyy")),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                text = "LAST 5 WEEKS",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 6.dp)
+            )
+            val days = (34 downTo 0).map { today.minusDays(it.toLong()) }
+            days.chunked(7).forEach { week ->
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    week.forEach { day ->
+                        val due = item.dueOn(day.dayOfWeek.value)
+                        val c = byDay[day.toEpochDay()]
+                        val frac = when {
+                            c == null -> 0f
+                            c.status == Completion.DONE || c.status == Completion.TAKEN -> 1f
+                            item.kind == HabitKind.COUNT ->
+                                (c.value.toFloat() / item.targetCount.coerceAtLeast(1))
+                                    .coerceIn(0f, 1f)
+                            else -> 0f
+                        }
+                        val skippedDay = c?.status == Completion.SKIPPED
+                        val bg = when {
+                            skippedDay -> MaterialTheme.colorScheme.surfaceVariant
+                            !due -> Color.Transparent
+                            frac >= 1f -> AcidGreen
+                            frac > 0f -> AcidGreen.copy(alpha = 0.3f + 0.7f * frac)
+                            else -> MaterialTheme.colorScheme.surfaceVariant
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(bg)
+                                .then(
+                                    if (!due) {
+                                        Modifier.border(
+                                            1.dp,
+                                            MaterialTheme.colorScheme.outline,
+                                            RoundedCornerShape(8.dp)
+                                        )
+                                    } else {
+                                        Modifier
+                                    }
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (skippedDay) {
+                                Text(
+                                    text = "✕",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            Text(
+                text = "Green = done · ✕ = skipped · grey = missed · hollow = not scheduled",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                Text("Close", color = AcidGreen)
+            }
+        }
+    }
 }
 
 private fun subText(item: TrackItem, completion: Completion?, weeklyDone: Int? = null): String {
